@@ -5,7 +5,9 @@ module DBSP.Tests.Properties.Incremental
 open System
 open System.Threading.Tasks
 open NUnit.Framework
+open NUnit.Framework
 open FsCheck
+open FsCheck.FSharp
 open DBSP.Core.ZSet
 open DBSP.Operators.Interfaces
 open DBSP.Operators.LinearOperators

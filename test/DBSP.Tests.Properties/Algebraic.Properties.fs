@@ -4,7 +4,9 @@ module DBSP.Tests.Properties.Algebraic
 
 open System
 open NUnit.Framework
+open NUnit.Framework
 open FsCheck
+open FsCheck.FSharp
 open DBSP.Core.ZSet
 open DBSP.Core.Algebra
 open DBSP.Tests.Properties.Generators
@@ -94,6 +96,8 @@ type GroupLawProperties() =
 /// Ring-like Properties - Tests for additional algebraic structure
 [<TestFixture>]  
 type RingLikeProperties() =
+    
+    let config = Config.Quick.WithArbitrary([typeof<ZSetGenerators>])
     
     /// Test that union is the same as addition for Z-sets
     [<Test>]

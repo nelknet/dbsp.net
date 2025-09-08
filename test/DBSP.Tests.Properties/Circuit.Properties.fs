@@ -6,6 +6,7 @@ open System
 open System.Threading.Tasks
 open NUnit.Framework
 open FsCheck
+open FsCheck.FSharp
 open DBSP.Core.ZSet
 open DBSP.Circuit
 open DBSP.Operators.LinearOperators
