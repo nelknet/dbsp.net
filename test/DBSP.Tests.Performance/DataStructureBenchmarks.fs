@@ -89,12 +89,4 @@ type ZSetOperationBenchmarks() =
     member this.ZSet_Union() =
         ZSet.union this.zset1 this.zset2
 
-/// Entry point for running benchmarks
-[<EntryPoint>]
-let main args =
-    let switcher = BenchmarkSwitcher [|
-        typeof<DataStructureComparisonBenchmarks>
-        typeof<ZSetOperationBenchmarks>
-    |]
-    switcher.Run(args) |> ignore
-    0
+// Data structure benchmarks - entry point moved to Program.fs

@@ -13,6 +13,7 @@
     <Compile Include="ZSetTests.fs" />
     <Compile Include="IndexedZSetTests.fs" />
     <Compile Include="StreamTests.fs" />
+    <Compile Include="OperatorTests.fs" />
     <Compile Include="UnitTest1.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
@@ -28,6 +29,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\DBSP.Core\DBSP.Core.fsproj" />
+    <ProjectReference Include="..\..\src\DBSP.Operators\DBSP.Operators.fsproj" />
   </ItemGroup>
 
 </Project>
