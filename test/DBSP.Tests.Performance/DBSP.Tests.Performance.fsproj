@@ -8,12 +8,14 @@
   <ItemGroup>
     <Compile Include="DataStructureBenchmarks.fs" />
     <Compile Include="OperatorBenchmarks.fs" />
+    <Compile Include="CircuitBenchmarks.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\DBSP.Core\DBSP.Core.fsproj" />
     <ProjectReference Include="..\..\src\DBSP.Operators\DBSP.Operators.fsproj" />
+    <ProjectReference Include="..\..\src\DBSP.Circuit\DBSP.Circuit.fsproj" />
   </ItemGroup>
 
   <ItemGroup>

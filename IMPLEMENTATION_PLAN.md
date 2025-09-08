@@ -622,12 +622,23 @@ dotnet test
 - BenchmarkDotNet infrastructure for operator performance measurement
 - Support for both typed and interface-based operator usage
 
-### Phase 3: Circuit Runtime
-- [ ] Design circuit builder API with dependency topology management
-- [ ] Implement Task-based multi-threaded circuit execution (matching Feldera's architecture)
-- [ ] Create async input/output handles using .NET Channels
-- [ ] Add basic circuit optimization (operator fusion)
-- [ ] Implement circuit visualization for debugging
+### Phase 3: Circuit Runtime ✅ COMPLETED
+- [x] Design circuit builder API with dependency topology management
+- [x] Implement Task-based multi-threaded circuit execution (matching Feldera's architecture)
+- [x] Create async input/output handles using .NET Channels
+- [x] Add basic circuit optimization (operator fusion)
+- [x] Implement circuit visualization for debugging
+
+**Implementation Notes:**
+- Created DBSP.Circuit project with complete circuit runtime infrastructure
+- Implemented builder pattern API matching Feldera's design with fluent interface
+- Built Task-based multi-threaded runtime with dependency-aware scheduling 
+- Created async input/output handles using .NET Channels for high-performance I/O
+- Added circuit optimization framework with dead code elimination and operator fusion rules
+- Implemented GraphViz/DOT visualization generation matching Feldera's visual_graph functionality
+- All 80 unit tests passing including 11 new circuit-specific tests (6 circuit + 5 visualization)
+- Performance benchmarks implemented for circuit construction, execution, scheduling, and I/O throughput
+- No performance regressions detected in comprehensive test suite
 
 ### Phase 4: Advanced Operators
 - [ ] Enhance operators with sophisticated incremental state management

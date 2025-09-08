@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Builder.fs" />
+    <Compile Include="Scheduler.fs" />
+    <Compile Include="Handles.fs" />
+    <Compile Include="Runtime.fs" />
+    <Compile Include="Optimizer.fs" />
+    <Compile Include="Visualization.fs" />
+    <Compile Include="API.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DBSP.Core\DBSP.Core.fsproj" />
+    <ProjectReference Include="..\DBSP.Operators\DBSP.Operators.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Data.Adaptive" Version="1.2.25" />
+    <PackageReference Include="System.Threading.Channels" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>
