@@ -1,6 +1,8 @@
 /// Streams: Time-indexed sequences of changes for temporal processing
 module DBSP.Core.Stream
 
+open System
+open System.Runtime.CompilerServices
 open FSharp.Data.Adaptive
 open DBSP.Core.Algebra
 
@@ -69,10 +71,11 @@ module Stream =
     let combine (stream1: Stream<'T>) (stream2: Stream<'T>) (combiner: 'T -> 'T -> 'T) = 
         Stream<'T>.Combine stream1 stream2 combiner
 
-    /// Add a value at specific timestamp (requires 'T to support addition and zero)
-    let insertAt time value (stream: Stream<'T>) (defaultValue: 'T) (adder: 'T -> 'T -> 'T) =
-        let existingValue = HashMap.tryFind time stream.Timeline |> Option.defaultValue defaultValue
-        let newValue = adder existingValue value
+    /// Add a value at specific timestamp with algebraic constraints
+    let inline insertAt<'T when 'T : (static member Zero : 'T) and 'T : (static member (+) : 'T * 'T -> 'T)> 
+        time value (stream: Stream<'T>) =
+        let existingValue = HashMap.tryFind time stream.Timeline |> Option.defaultValue zero<'T>
+        let newValue = add existingValue value
         let newTimeline = HashMap.add time newValue stream.Timeline
         { Timeline = newTimeline; CurrentTime = max stream.CurrentTime time }
 
@@ -85,9 +88,33 @@ module Stream =
             |> HashMap.ofSeq
         { Timeline = delayedTimeline; CurrentTime = stream.CurrentTime + offset }
 
-    /// Integrate stream (compute cumulative values over time) with provided zero value and adder
-    let integrate (stream: Stream<'T>) (zeroValue: 'T) (adder: 'T -> 'T -> 'T) : Stream<'T> =
+    /// Integrate stream (compute cumulative values over time) with algebraic constraints
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    let inline integrate<'T when 'T : (static member Zero : 'T) and 'T : (static member (+) : 'T * 'T -> 'T)> 
+        (stream: Stream<'T>) : Stream<'T> =
         // O(N log N) sorting required for temporal integration
+        let sortedEntries = 
+            HashMap.toSeq stream.Timeline
+            |> Seq.sortBy fst
+            |> Seq.toArray
+        
+        if sortedEntries.Length = 0 then
+            empty<'T>
+        else
+            // Use span for efficient array processing
+            let sortedSpan = sortedEntries.AsSpan()
+            let mutable accumulator = zero<'T>
+            let integratedEntries = Array.zeroCreate sortedEntries.Length
+            
+            for i = 0 to sortedSpan.Length - 1 do
+                let (time, value) = sortedSpan.[i]
+                accumulator <- add accumulator value
+                integratedEntries.[i] <- (time, accumulator)
+            
+            { Timeline = HashMap.ofArray integratedEntries; CurrentTime = stream.CurrentTime }
+
+    /// Integrate stream with explicit zero value and adder (for non-SRTP types)
+    let integrateWith (stream: Stream<'T>) (zeroValue: 'T) (adder: 'T -> 'T -> 'T) : Stream<'T> =
         let sortedEntries = 
             HashMap.toSeq stream.Timeline
             |> Seq.sortBy fst

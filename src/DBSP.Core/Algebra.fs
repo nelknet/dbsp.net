@@ -3,20 +3,27 @@
 /// supporting DBSP's incremental computation requirements
 module DBSP.Core.Algebra
 
+open System.Runtime.CompilerServices
+
 /// Core algebraic operations using F# 7+ simplified SRTP syntax
 /// F# 7+ allows 'T instead of ^T and direct member access
+[<MethodImpl(MethodImplOptions.AggressiveInlining)>]
 let inline add<'T when 'T : (static member (+) : 'T * 'T -> 'T)> x y = 
     'T.(+)(x, y)
 
+[<MethodImpl(MethodImplOptions.AggressiveInlining)>]
 let inline zero<'T when 'T : (static member Zero : 'T)> = 
     'T.Zero
 
+[<MethodImpl(MethodImplOptions.AggressiveInlining)>]
 let inline negate<'T when 'T : (static member (~-) : 'T -> 'T)> x = 
     'T.(~-)(x)
-    
+
+[<MethodImpl(MethodImplOptions.AggressiveInlining)>]    
 let inline multiply<'T when 'T : (static member (*) : 'T * 'T -> 'T)> x y = 
     'T.(*)(x, y)
-    
+
+[<MethodImpl(MethodImplOptions.AggressiveInlining)>]    
 let inline one<'T when 'T : (static member One : 'T)> = 
     'T.One
 

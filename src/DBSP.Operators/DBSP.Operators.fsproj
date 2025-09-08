@@ -10,7 +10,7 @@
     <Compile Include="LinearOperators.fs" />
     <Compile Include="JoinOperators.fs" />
     <Compile Include="AggregateOperators.fs" />
-    <Compile Include="Library.fs" />
+    <Compile Include="API.fs" />
   </ItemGroup>
 
   <ItemGroup>

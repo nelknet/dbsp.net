@@ -2,6 +2,7 @@
 /// Using HashMap for O(1) index operations instead of O(log N) Map
 module DBSP.Core.IndexedZSet
 
+open System.Runtime.CompilerServices
 open FSharp.Data.Adaptive
 open DBSP.Core.ZSet
 
@@ -98,24 +99,6 @@ module IndexedZSet =
             ) acc zset
         ) (ZSet.empty<'K * 'V>) indexed.Index
 
-    /// Basic inner join of two IndexedZSets on their keys
-    let join (left: IndexedZSet<'K, 'V1>) (right: IndexedZSet<'K, 'V2>) : IndexedZSet<'K, 'V1 * 'V2> =
-        let joinedIndex = 
-            HashMap.choose (fun key leftZSet ->
-                match HashMap.tryFind key right.Index with
-                | Some rightZSet ->
-                    // Cartesian product of the two ZSets for this key
-                    let product = 
-                        ZSet.fold (fun acc1 leftVal leftWeight ->
-                            ZSet.fold (fun acc2 rightVal rightWeight ->
-                                let combinedWeight = leftWeight * rightWeight
-                                ZSet.insert (leftVal, rightVal) combinedWeight acc2
-                            ) acc1 rightZSet
-                        ) (ZSet.empty<'V1 * 'V2>) leftZSet
-                    if product.IsEmpty then None else Some product
-                | None -> None
-            ) left.Index
-        { Index = joinedIndex }
 
     /// Filter IndexedZSet by key predicate
     let filterByKey predicate indexed =
@@ -136,6 +119,29 @@ module IndexedZSet =
         |> HashMap.ofSeq
         |> fun newIndex -> { Index = newIndex }
 
-    /// Convenient inline functions
+    /// Convenient inline functions with aggressive optimization
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     let inline add (indexed1: IndexedZSet<'K,'V>) (indexed2: IndexedZSet<'K,'V>) = indexed1 + indexed2
+    
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     let inline negate (indexed: IndexedZSet<'K,'V>) = -indexed
+
+    /// High-performance join operation with aggressive inlining
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    let inline join (left: IndexedZSet<'K, 'V1>) (right: IndexedZSet<'K, 'V2>) : IndexedZSet<'K, 'V1 * 'V2> =
+        let joinedIndex = 
+            HashMap.choose (fun key leftZSet ->
+                match HashMap.tryFind key right.Index with
+                | Some rightZSet ->
+                    // Cartesian product of the two ZSets for this key
+                    let product = 
+                        ZSet.fold (fun acc1 leftVal leftWeight ->
+                            ZSet.fold (fun acc2 rightVal rightWeight ->
+                                let combinedWeight = leftWeight * rightWeight
+                                ZSet.insert (leftVal, rightVal) combinedWeight acc2
+                            ) acc1 rightZSet
+                        ) (ZSet.empty<'V1 * 'V2>) leftZSet
+                    if product.IsEmpty then None else Some product
+                | None -> None
+            ) left.Index
+        { Index = joinedIndex }

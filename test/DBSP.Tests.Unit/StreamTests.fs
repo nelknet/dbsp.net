@@ -63,16 +63,17 @@ type StreamBasicOperationTests() =
     [<Test>]
     member _.``insertAt with integer addition``() =
         let stream = Stream.singleton 10L 5
-        let updated = Stream.insertAt 10L 3 stream 0 (+)
+        let updated = Stream.insertAt 10L 3 stream
         
         Assert.AreEqual(Some 8, updated.GetValueAt(10L)) // 5 + 3
 
     [<Test>]
-    member _.``insertAt with string concatenation``() =
-        let stream = Stream.singleton 10L "hello"
-        let updated = Stream.insertAt 10L " world" stream "" (+)
+    member _.``integrateWith with string concatenation``() =
+        let stream = Stream.ofSeq [(10L, "hello"); (20L, " world")]
+        let integrated = Stream.integrateWith stream "" (+)
         
-        Assert.AreEqual(Some "hello world", updated.GetValueAt(10L))
+        Assert.AreEqual(Some "hello", integrated.GetValueAt(10L)) 
+        Assert.AreEqual(Some "hello world", integrated.GetValueAt(20L))
 
     [<Test>]
     member _.``delay shifts all timestamps``() =
@@ -87,7 +88,7 @@ type StreamBasicOperationTests() =
     [<Test>]
     member _.``integrate computes cumulative sums correctly``() =
         let stream = Stream.ofSeq [(10L, 3); (20L, 2); (30L, 1)]
-        let integrated = Stream.integrate stream 0 (+)
+        let integrated = Stream.integrate stream  // Uses SRTP constraints for int
         
         Assert.AreEqual(Some 3, integrated.GetValueAt(10L)) // 0 + 3
         Assert.AreEqual(Some 5, integrated.GetValueAt(20L)) // 3 + 2  

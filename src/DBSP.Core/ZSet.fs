@@ -2,6 +2,7 @@
 /// incremental computation through positive and negative weights
 module DBSP.Core.ZSet
 
+open System.Runtime.CompilerServices
 open FSharp.Data.Adaptive
 
 /// Z-set type using high-performance HashMap for O(1) operations
@@ -71,12 +72,18 @@ module ZSet =
         |> Seq.filter (fun (_, weight) -> weight <> 0)
 
     /// Convenient inline functions using F# 7+ simplified SRTP syntax
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     let inline add (zset1: ZSet<'K>) (zset2: ZSet<'K>) = zset1 + zset2
+    
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     let inline negate (zset: ZSet<'K>) = -zset
+    
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     let inline scalarMultiply scalar (zset: ZSet<'K>) = scalar * zset
 
     /// Insert a key with given weight (adds to existing weight)
-    let insert key weight (zset: ZSet<'K>) =
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    let inline insert key weight (zset: ZSet<'K>) =
         let newWeight = zset.GetWeight(key) + weight
         if newWeight = 0 then
             // Remove key if weight becomes zero
@@ -89,23 +96,28 @@ module ZSet =
         insert key (-weight) zset
 
     /// Union of two ZSets (same as addition)
-    let union zset1 zset2 = add zset1 zset2
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    let inline union zset1 zset2 = add zset1 zset2
 
     /// Difference of two ZSets
-    let difference zset1 zset2 = add zset1 (negate zset2)
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    let inline difference zset1 zset2 = add zset1 (negate zset2)
 
     /// Filter ZSet by key predicate
-    let filter predicate zset =
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    let inline filter ([<InlineIfLambda>] predicate) zset =
         { Inner = HashMap.filter (fun key _ -> predicate key) zset.Inner }
 
     /// Map over keys (preserving weights)
-    let mapKeys f zset =
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    let inline mapKeys ([<InlineIfLambda>] f) zset =
         HashMap.toSeq zset.Inner
         |> Seq.map (fun (key, weight) -> (f key, weight))
         |> ofSeq
 
     /// Fold over ZSet entries
-    let fold folder state zset =
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    let inline fold ([<InlineIfLambda>] folder) state zset =
         HashMap.fold (fun acc key weight -> 
             if weight <> 0 then folder acc key weight else acc
         ) state zset.Inner

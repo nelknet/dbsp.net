@@ -10,7 +10,7 @@
     <Compile Include="ZSet.fs" />
     <Compile Include="IndexedZSet.fs" />
     <Compile Include="Stream.fs" />
-    <Compile Include="Library.fs" />
+    <Compile Include="API.fs" />
   </ItemGroup>
 
   <ItemGroup>

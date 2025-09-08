@@ -5,12 +5,14 @@ module DBSP.Operators.Interfaces
 open System.Threading.Tasks
 
 /// Ownership preference for input data (for optimization)
+[<Struct>]
 type OwnershipPreference =
     | PreferRef     // Prefer reference to avoid copying
     | PreferOwned   // Prefer owned value for mutation
     | NoPreference  // Either is fine
 
 /// Scope for circuit execution phases  
+[<Struct>]
 type Scope = 
     | Clock of int64
     | Step of int64
@@ -139,6 +141,7 @@ type OperatorFactory<'Config, 'Op when 'Op :> IOperator> = {
 }
 
 /// Operator metadata for circuit construction and visualization
+[<Struct>]
 type OperatorMetadata = {
     Id: int64
     Name: string
