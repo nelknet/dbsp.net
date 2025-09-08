@@ -1,0 +1,80 @@
+﻿[
+  {
+    "creation": "0001-01-01T00:00:00+00:00",
+    "buildNumber": null,
+    "pinned": false,
+    "buildUri": null,
+    "branchName": "main",
+    "commitSha": "6119d65",
+    "tags": null,
+    "runs": []
+  },
+  {
+    "creation": "2025-09-08T13:53:31-04:00",
+    "buildNumber": null,
+    "pinned": true,
+    "buildUri": null,
+    "branchName": "main",
+    "commitSha": "6119d65",
+    "tags": null,
+    "runs": [
+      {
+        "creation": "2025-09-08T13:53:31-04:00",
+        "benchmarkDotNetVersion": "0.15.2",
+        "results": [
+          {
+            "fullName": "DBSP.Tests.Performance.DataStructureBenchmarks+ZSetOperationBenchmarks.ZSet_Addition(SetSize: 100)",
+            "namespace": "DBSP.Tests.Performance",
+            "type": "ZSetOperationBenchmarks",
+            "method": "ZSet_Addition",
+            "parameters": "SetSize=100",
+            "meanTime": 1329.2137260437,
+            "minTime": 1327.3839969635,
+            "q1Time": 1328.458111763,
+            "medianTime": 1329.5322265625,
+            "q3Time": 1330.1285905838,
+            "maxTime": 1330.7249546051,
+            "gen0Collections": 596.0,
+            "gen1Collections": 4.0,
+            "gen2Collections": 0.0,
+            "bytesAllocatedPerOp": 9520.0
+          },
+          {
+            "fullName": "DBSP.Tests.Performance.DataStructureBenchmarks+ZSetOperationBenchmarks.ZSet_Addition(SetSize: 1000)",
+            "namespace": "DBSP.Tests.Performance",
+            "type": "ZSetOperationBenchmarks",
+            "method": "ZSet_Addition",
+            "parameters": "SetSize=1000",
+            "meanTime": 13769.2782109578,
+            "minTime": 13724.948890686,
+            "q1Time": 13750.0718460083,
+            "medianTime": 13775.1948013306,
+            "q3Time": 13791.4428710938,
+            "maxTime": 13807.6909408569,
+            "gen0Collections": 724.0,
+            "gen1Collections": 53.0,
+            "gen2Collections": 0.0,
+            "bytesAllocatedPerOp": 92416.0
+          },
+          {
+            "fullName": "DBSP.Tests.Performance.DataStructureBenchmarks+ZSetOperationBenchmarks.ZSet_Addition(SetSize: 10000)",
+            "namespace": "DBSP.Tests.Performance",
+            "type": "ZSetOperationBenchmarks",
+            "method": "ZSet_Addition",
+            "parameters": "SetSize=10000",
+            "meanTime": 153627.943277995,
+            "minTime": 152947.123291016,
+            "q1Time": 153295.857788086,
+            "medianTime": 153644.592285156,
+            "q3Time": 153968.353271484,
+            "maxTime": 154292.114257812,
+            "gen0Collections": 450.0,
+            "gen1Collections": 155.0,
+            "gen2Collections": 0.0,
+            "bytesAllocatedPerOp": 920512.0
+          }
+        ]
+      }
+    ]
+  }
+]

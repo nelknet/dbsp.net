@@ -1,0 +1,5 @@
+#!/bin/bash
+# DBSP.NET Performance Testing - Dotnet CLI Integration
+# Usage: dotnet run --project scripts/benchmark [args...]
+
+exec ./scripts/run-benchmark-analysis.sh "$@"

@@ -1,0 +1,13 @@
+# BenchmarkDotNet artifacts - keep directory structure but ignore temporary files
+*.tmp
+*.log
+BenchmarkDotNet.Artifacts/
+
+# Keep JSON reports for BDNA analysis
+!*-report-full.json
+!*-report.json
+
+# Keep analysis results  
+!*.json
+!*.csv
+!*.md

@@ -10,6 +10,11 @@ open System.Collections.Generic
 
 [<MemoryDiagnoser>]
 [<SimpleJob>]
+[<MinColumn>]
+[<MaxColumn>]
+[<Q1Column>]
+[<Q3Column>]
+[<AllStatisticsColumn>]
 type DataStructureComparisonBenchmarks() =
     
     [<Params(100, 1_000, 10_000)>]
@@ -61,6 +66,11 @@ type DataStructureComparisonBenchmarks() =
         HashMap.unionWith (fun _ a b -> a + b) map1 map2
 
 [<MemoryDiagnoser>]
+[<MinColumn>]
+[<MaxColumn>]
+[<Q1Column>]
+[<Q3Column>]
+[<AllStatisticsColumn>]
 type ZSetOperationBenchmarks() =
     
     [<Params(100, 1_000, 10_000)>]

@@ -214,3 +214,4 @@ DBSP.NET/
 - [ ] Integration with .NET ecosystem
 
 This F# implementation aims to bring DBSP's powerful incremental computation capabilities to the .NET ecosystem while maintaining the mathematical rigor and performance characteristics of the reference implementations.
+- Before declaring that a task is complete, if it may have had a performance impact, run the ./test-regression.sh script to ensure there are no performance regressions.  Ensure that performance regression tests are added for performance-sensitive code.

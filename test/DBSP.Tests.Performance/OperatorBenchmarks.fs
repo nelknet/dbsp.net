@@ -14,6 +14,11 @@ open DBSP.Operators.AggregateOperators
 
 [<MemoryDiagnoser>]
 [<SimpleJob>]
+[<MinColumn>]
+[<MaxColumn>]
+[<Q1Column>]
+[<Q3Column>]
+[<AllStatisticsColumn>]
 type LinearOperatorBenchmarks() =
     
     [<Params(100, 1_000, 10_000)>]
@@ -52,6 +57,11 @@ type LinearOperatorBenchmarks() =
     }
 
 [<MemoryDiagnoser>]
+[<MinColumn>]
+[<MaxColumn>]
+[<Q1Column>]
+[<Q3Column>]
+[<AllStatisticsColumn>]
 type BinaryOperatorBenchmarks() =
     
     [<Params(100, 1_000, 10_000)>]
@@ -85,6 +95,11 @@ type BinaryOperatorBenchmarks() =
     }
 
 [<MemoryDiagnoser>]
+[<MinColumn>]
+[<MaxColumn>]
+[<Q1Column>]
+[<Q3Column>]
+[<AllStatisticsColumn>]
 type AggregationOperatorBenchmarks() =
     
     [<Params(100, 1_000, 10_000)>]
@@ -128,6 +143,11 @@ type AggregationOperatorBenchmarks() =
     }
 
 [<MemoryDiagnoser>]
+[<MinColumn>]
+[<MaxColumn>]
+[<Q1Column>]
+[<Q3Column>]
+[<AllStatisticsColumn>]
 type JoinOperatorBenchmarks() =
     
     [<Params(100, 1_000, 5_000)>]  // Smaller for joins due to complexity
