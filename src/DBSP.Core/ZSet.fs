@@ -18,7 +18,9 @@ type ZSet<'K when 'K: comparison> =
     
     static member (+) (zset1: ZSet<'K>, zset2: ZSet<'K>) : ZSet<'K> = 
         // O(N + M) union operation - much faster than O(N * log M) Map union
-        let combined = HashMap.unionWith (fun _ w1 w2 -> w1 + w2) zset1.Inner zset2.Inner
+        let combined = 
+            HashMap.unionWith (fun _ w1 w2 -> w1 + w2) zset1.Inner zset2.Inner
+            |> HashMap.filter (fun _ weight -> weight <> 0) // Remove zero-weight elements
         { Inner = combined }
         
     static member (~-) (zset: ZSet<'K>) : ZSet<'K> = 

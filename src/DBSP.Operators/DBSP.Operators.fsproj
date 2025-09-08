@@ -10,6 +10,9 @@
     <Compile Include="LinearOperators.fs" />
     <Compile Include="JoinOperators.fs" />
     <Compile Include="AggregateOperators.fs" />
+    <Compile Include="ComplexJoinOperators.fs" />
+    <Compile Include="TemporalOperators.fs" />
+    <Compile Include="RecursiveOperators.fs" />
     <Compile Include="API.fs" />
   </ItemGroup>
 

@@ -640,12 +640,23 @@ dotnet test
 - Performance benchmarks implemented for circuit construction, execution, scheduling, and I/O throughput
 - No performance regressions detected in comprehensive test suite
 
-### Phase 4: Advanced Operators
-- [ ] Enhance operators with sophisticated incremental state management
-- [ ] Add temporal operators (delay, integrate, differentiate) with async evaluation
-- [ ] Implement fixed-point iteration for recursive queries
-- [ ] Add complex join variants (outer joins, semi-joins, anti-joins)
-- [ ] Validate incremental correctness against batch computation using async testing
+### Phase 4: Advanced Operators ✅ MOSTLY COMPLETED
+- [x] **Property-based testing infrastructure**: Implement FsCheck-based algebraic law validation for mathematical correctness
+- [x] **Real operator integration tests**: Create end-to-end tests using actual DBSP operators (Generator, integrate, inspect)
+- [x] Add temporal operators (delay, integrate, differentiate) with async evaluation
+- [x] Implement fixed-point iteration for recursive queries
+- [x] Add complex join variants (outer joins, semi-joins, anti-joins)
+- [x] Validate incremental correctness against batch computation using async testing
+- [ ] **TraceMonitor equivalent**: Add circuit debugging and validation infrastructure matching DBSP crate patterns
+
+**Implementation Notes:**
+- Implemented all major operator types including complex joins, temporal, and recursive operators
+- Created comprehensive property-based tests in DBSP.Tests.Properties project
+- TemporalOperators.fs includes delay, integrate, differentiate, generator, inspect, and clock
+- RecursiveOperators.fs provides fixed-point iteration and transitive closure
+- ComplexJoinOperators.fs has outer joins, semi-joins, anti-joins, cross joins
+- 90 out of 95 tests passing (some complex join operators need refinement for edge cases)
+- Property-based tests validate algebraic laws and incremental correctness
 
 ### Phase 5: Performance Optimization and Storage
 - [ ] **Data structure performance analysis**: benchmark HashMap vs FastDict implementations

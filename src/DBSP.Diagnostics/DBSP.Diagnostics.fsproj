@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="CircuitEvents.fs" />
+    <Compile Include="CircuitGraph.fs" />
+    <Compile Include="StateValidation.fs" />
+    <Compile Include="TraceMonitor.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DBSP.Core\DBSP.Core.fsproj" />
+    <ProjectReference Include="..\DBSP.Operators\DBSP.Operators.fsproj" />
+    <ProjectReference Include="..\DBSP.Circuit\DBSP.Circuit.fsproj" />
+  </ItemGroup>
+
+</Project>
