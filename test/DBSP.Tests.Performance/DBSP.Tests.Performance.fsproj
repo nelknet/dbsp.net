@@ -12,6 +12,7 @@
     <Compile Include="FastBenchmarks.fs" />
     <Compile Include="SimpleBenchmark.fs" />
     <Compile Include="OptimizationValidation.fs" />
+    <Compile Include="ParallelExecutionBenchmarks.fs" />
     <Compile Include="OperatorBenchmarks.fs" />
     <Compile Include="CircuitBenchmarks.fs" />
     <Compile Include="Program.fs" />

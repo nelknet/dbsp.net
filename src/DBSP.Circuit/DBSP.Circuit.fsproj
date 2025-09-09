@@ -10,6 +10,9 @@
     <Compile Include="Scheduler.fs" />
     <Compile Include="Handles.fs" />
     <Compile Include="Runtime.fs" />
+    <Compile Include="ParallelRuntime.fs" />
+    <Compile Include="BatchOptimization.fs" />
+    <Compile Include="SpanOptimizations.fs" />
     <Compile Include="Optimizer.fs" />
     <Compile Include="Visualization.fs" />
     <Compile Include="API.fs" />
