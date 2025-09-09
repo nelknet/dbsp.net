@@ -677,11 +677,19 @@ dotnet test
 - **Future Optimization Path**: FastZSet available for 2-3x additional performance gain if needed in production workloads requiring extreme performance
 
 ### Phase 5.2: Parallel Execution and Runtime Optimization  
-- [ ] **Task-based parallelism enhancement**: Optimize worker load balancing and Task.WhenAll coordination
-- [ ] **NUMA-aware thread management**: Implement thread affinity and memory allocation strategies
-- [ ] **Circuit scheduling optimization**: Enhance dependency-aware scheduling with work-stealing patterns
-- [ ] **Batch processing optimization**: Tune batch sizes for optimal latency vs throughput trade-offs
-- [ ] **Performance regression testing**: Establish automated performance baselines with BenchmarkDotNet
+- [ ] **Task-based parallelism enhancement**: Optimize worker load balancing, Task.WhenAll coordination, and LongRunning task patterns
+- [ ] **.NET-native thread optimization**: Leverage .NET ThreadPool NUMA awareness and ThreadLocal<T> for per-worker state instead of explicit CPU pinning
+- [ ] **Circuit scheduling optimization**: Enhance dependency-aware scheduling with .NET work-stealing patterns and priority queuing
+- [ ] **Buffer cache optimization**: Implement ThreadLocal<BufferCache> following Feldera patterns but using .NET-native memory locality
+- [ ] **Batch processing optimization**: Tune batch sizes for optimal latency vs throughput trade-offs with .NET's parallel execution model
+- [ ] **Performance regression testing**: Establish automated performance baselines with BenchmarkDotNet for parallel execution patterns
+
+**Analysis Notes:**
+- **NUMA in Original DBSP**: Feldera DBSP runtime.rs implements explicit CPU pinning (`core_affinity::set_for_current`) with per-worker buffer caches and thread-local storage
+- **.NET ThreadPool Advantage**: .NET Core+ ThreadPool is already NUMA-aware with automatic topology detection and memory allocation on correct NUMA nodes  
+- **Recommended .NET Approach**: Use ThreadLocal<T> for memory locality, LongRunning tasks for dedicated workers, and let .NET handle NUMA placement automatically
+- **Avoid Explicit Pinning**: Platform-specific CPU pinning adds complexity without significant benefit over .NET's built-in optimizations
+- **Focus Areas**: Worker coordination patterns, cache-friendly data structures, and algorithmic parallelism rather than low-level thread control
 
 ### Phase 5.3: Persistent Storage Backend Implementation
 - [ ] **Storage abstraction design**: Design pluggable storage backend architecture following Feldera patterns
