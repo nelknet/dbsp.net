@@ -67,6 +67,45 @@ module ZSet =
     /// Create ZSet from list of key-weight pairs  
     let ofList (pairs: ('K * int) list) =
         { Inner = HashMap.ofList pairs }
+    
+    /// Efficient batch insertion avoiding repeated singleton creation
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    let insertMany (zset: ZSet<'K>) (pairs: seq<'K * int>) =
+        let mutable inner = zset.Inner
+        for (key, weight) in pairs do
+            if weight <> 0 then
+                inner <- HashMap.alter key (function
+                    | Some existing -> 
+                        let newWeight = existing + weight
+                        if newWeight = 0 then None else Some newWeight
+                    | None -> Some weight
+                ) inner
+        { Inner = inner }
+    
+    /// Builder for efficient ZSet construction  
+    type ZSetBuilder<'K when 'K : comparison>() =
+        let mutable inner = HashMap.empty<'K, int>
+        
+        member _.Add(key: 'K, weight: int) =
+            if weight <> 0 then
+                inner <- HashMap.alter key (function
+                    | Some existing -> 
+                        let newWeight = existing + weight
+                        if newWeight = 0 then None else Some newWeight
+                    | None -> Some weight
+                ) inner
+        
+        member this.AddRange(pairs: seq<'K * int>) =
+            for (key, weight) in pairs do
+                this.Add(key, weight)
+        
+        member _.Build() = { Inner = inner }
+    
+    /// Build ZSet efficiently using builder pattern
+    let buildZSet (builderFn: ZSetBuilder<'K> -> unit) =
+        let builder = ZSetBuilder<'K>()
+        builderFn builder
+        builder.Build()
 
     /// Convert ZSet to sequence of key-weight pairs (excluding zero weights)
     let toSeq (zset: ZSet<'K>) =

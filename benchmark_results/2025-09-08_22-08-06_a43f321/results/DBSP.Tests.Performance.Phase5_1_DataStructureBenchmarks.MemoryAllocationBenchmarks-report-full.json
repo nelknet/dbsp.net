@@ -1,0 +1,653 @@
+{
+   "Title":"DBSP.Tests.Performance.Phase5_1_DataStructureBenchmarks.MemoryAllocationBenchmarks-20250908-180812",
+   "HostEnvironmentInfo":{
+      "BenchmarkDotNetCaption":"BenchmarkDotNet",
+      "BenchmarkDotNetVersion":"0.15.2",
+      "OsVersion":"macOS Sequoia 15.6.1 (24G90) [Darwin 24.6.0]",
+      "ProcessorName":"Apple M4 Max",
+      "PhysicalProcessorCount":1,
+      "PhysicalCoreCount":16,
+      "LogicalCoreCount":16,
+      "RuntimeVersion":".NET 9.0.8 (9.0.825.36511)",
+      "Architecture":"Arm64",
+      "HasAttachedDebugger":false,
+      "HasRyuJit":true,
+      "Configuration":"DEBUG",
+      "DotNetCliVersion":"10.0.100-preview.7.25380.108",
+      "ChronometerFrequency":{
+         "Hertz":1000000000
+      },
+      "HardwareTimerKind":"Unknown"
+   },
+   "Benchmarks":[
+      {
+         "DisplayInfo":"MemoryAllocationBenchmarks.ZSet_RepeatedAdditions: Dry(IterationCount=1, LaunchCount=1, RunStrategy=ColdStart, UnrollFactor=1, WarmupCount=1) [OperationCount=1000]",
+         "Namespace":"DBSP.Tests.Performance",
+         "Type":"MemoryAllocationBenchmarks",
+         "Method":"ZSet_RepeatedAdditions",
+         "MethodTitle":"ZSet_RepeatedAdditions",
+         "Parameters":"OperationCount=1000",
+         "FullName":"DBSP.Tests.Performance.Phase5_1_DataStructureBenchmarks+MemoryAllocationBenchmarks.ZSet_RepeatedAdditions(OperationCount: 1000)",
+         "HardwareIntrinsics":"AdvSIMD,AES,CRC32,DP,RDM,SHA1,SHA256 VectorSize=128",
+         "Statistics":{
+            "OriginalValues":[
+               36410500
+            ],
+            "N":1,
+            "Min":36410500,
+            "LowerFence":36410500,
+            "Q1":36410500,
+            "Median":36410500,
+            "Mean":36410500,
+            "Q3":36410500,
+            "UpperFence":36410500,
+            "Max":36410500,
+            "InterquartileRange":0,
+            "LowerOutliers":[
+               
+            ],
+            "UpperOutliers":[
+               
+            ],
+            "AllOutliers":[
+               
+            ],
+            "StandardError":0,
+            "Variance":0,
+            "StandardDeviation":0,
+            "Skewness":"",
+            "Kurtosis":"",
+            "ConfidenceInterval":{
+               "N":1,
+               "Mean":36410500,
+               "StandardError":0,
+               "Level":12,
+               "Margin":"",
+               "Lower":"",
+               "Upper":""
+            },
+            "Percentiles":{
+               "P0":36410500,
+               "P25":36410500,
+               "P50":36410500,
+               "P67":36410500,
+               "P80":36410500,
+               "P85":36410500,
+               "P90":36410500,
+               "P95":36410500,
+               "P100":36410500
+            }
+         },
+         "Memory":{
+            "Gen0Collections":5,
+            "Gen1Collections":1,
+            "Gen2Collections":0,
+            "TotalOperations":1,
+            "BytesAllocatedPerOperation":44393008
+         },
+         "Measurements":[
+            {
+               "IterationMode":"Workload",
+               "IterationStage":"Actual",
+               "LaunchIndex":1,
+               "IterationIndex":1,
+               "Operations":1,
+               "Nanoseconds":36410500
+            },{
+               "IterationMode":"Workload",
+               "IterationStage":"Result",
+               "LaunchIndex":1,
+               "IterationIndex":1,
+               "Operations":1,
+               "Nanoseconds":36410500
+            }
+         ],
+         "Metrics":[
+            {
+               "Value":5000,
+               "Descriptor":{
+                  "Id":"Gen0Collects",
+                  "DisplayName":"Gen0",
+                  "Legend":"GC Generation 0 collects per 1000 operations",
+                  "NumberFormat":"#0.0000",
+                  "UnitType":0,
+                  "Unit":"Count",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":0
+               }
+            },{
+               "Value":1000,
+               "Descriptor":{
+                  "Id":"Gen1Collects",
+                  "DisplayName":"Gen1",
+                  "Legend":"GC Generation 1 collects per 1000 operations",
+                  "NumberFormat":"#0.0000",
+                  "UnitType":0,
+                  "Unit":"Count",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":1
+               }
+            },{
+               "Value":0,
+               "Descriptor":{
+                  "Id":"Gen2Collects",
+                  "DisplayName":"Gen2",
+                  "Legend":"GC Generation 2 collects per 1000 operations",
+                  "NumberFormat":"#0.0000",
+                  "UnitType":0,
+                  "Unit":"Count",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":2
+               }
+            },{
+               "Value":44393008,
+               "Descriptor":{
+                  "Id":"Allocated Memory",
+                  "DisplayName":"Allocated",
+                  "Legend":"Allocated memory per single operation (managed only, inclusive, 1KB = 1024B)",
+                  "NumberFormat":"0.##",
+                  "UnitType":2,
+                  "Unit":"B",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":3
+               }
+            },{
+               "Value":0,
+               "Descriptor":{
+                  "Id":"CompletedWorkItemCount",
+                  "DisplayName":"Completed Work Items",
+                  "Legend":"The number of work items that have been processed in ThreadPool (per single operation)",
+                  "NumberFormat":"#0.0000",
+                  "UnitType":0,
+                  "Unit":"Count",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":0
+               }
+            },{
+               "Value":0,
+               "Descriptor":{
+                  "Id":"LockContentionCount",
+                  "DisplayName":"Lock Contentions",
+                  "Legend":"The number of times there was contention upon trying to take a Monitor's lock (per single operation)",
+                  "NumberFormat":"#0.0000",
+                  "UnitType":0,
+                  "Unit":"Count",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":0
+               }
+            }
+         ]
+      },{
+         "DisplayInfo":"MemoryAllocationBenchmarks.ZSet_BatchConstruction: Dry(IterationCount=1, LaunchCount=1, RunStrategy=ColdStart, UnrollFactor=1, WarmupCount=1) [OperationCount=1000]",
+         "Namespace":"DBSP.Tests.Performance",
+         "Type":"MemoryAllocationBenchmarks",
+         "Method":"ZSet_BatchConstruction",
+         "MethodTitle":"ZSet_BatchConstruction",
+         "Parameters":"OperationCount=1000",
+         "FullName":"DBSP.Tests.Performance.Phase5_1_DataStructureBenchmarks+MemoryAllocationBenchmarks.ZSet_BatchConstruction(OperationCount: 1000)",
+         "HardwareIntrinsics":"AdvSIMD,AES,CRC32,DP,RDM,SHA1,SHA256 VectorSize=128",
+         "Statistics":{
+            "OriginalValues":[
+               2785000
+            ],
+            "N":1,
+            "Min":2785000,
+            "LowerFence":2785000,
+            "Q1":2785000,
+            "Median":2785000,
+            "Mean":2785000,
+            "Q3":2785000,
+            "UpperFence":2785000,
+            "Max":2785000,
+            "InterquartileRange":0,
+            "LowerOutliers":[
+               
+            ],
+            "UpperOutliers":[
+               
+            ],
+            "AllOutliers":[
+               
+            ],
+            "StandardError":0,
+            "Variance":0,
+            "StandardDeviation":0,
+            "Skewness":"",
+            "Kurtosis":"",
+            "ConfidenceInterval":{
+               "N":1,
+               "Mean":2785000,
+               "StandardError":0,
+               "Level":12,
+               "Margin":"",
+               "Lower":"",
+               "Upper":""
+            },
+            "Percentiles":{
+               "P0":2785000,
+               "P25":2785000,
+               "P50":2785000,
+               "P67":2785000,
+               "P80":2785000,
+               "P85":2785000,
+               "P90":2785000,
+               "P95":2785000,
+               "P100":2785000
+            }
+         },
+         "Memory":{
+            "Gen0Collections":0,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":1,
+            "BytesAllocatedPerOperation":175984
+         },
+         "Measurements":[
+            {
+               "IterationMode":"Workload",
+               "IterationStage":"Actual",
+               "LaunchIndex":1,
+               "IterationIndex":1,
+               "Operations":1,
+               "Nanoseconds":2785000
+            },{
+               "IterationMode":"Workload",
+               "IterationStage":"Result",
+               "LaunchIndex":1,
+               "IterationIndex":1,
+               "Operations":1,
+               "Nanoseconds":2785000
+            }
+         ],
+         "Metrics":[
+            {
+               "Value":0,
+               "Descriptor":{
+                  "Id":"Gen0Collects",
+                  "DisplayName":"Gen0",
+                  "Legend":"GC Generation 0 collects per 1000 operations",
+                  "NumberFormat":"#0.0000",
+                  "UnitType":0,
+                  "Unit":"Count",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":0
+               }
+            },{
+               "Value":0,
+               "Descriptor":{
+                  "Id":"Gen1Collects",
+                  "DisplayName":"Gen1",
+                  "Legend":"GC Generation 1 collects per 1000 operations",
+                  "NumberFormat":"#0.0000",
+                  "UnitType":0,
+                  "Unit":"Count",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":1
+               }
+            },{
+               "Value":0,
+               "Descriptor":{
+                  "Id":"Gen2Collects",
+                  "DisplayName":"Gen2",
+                  "Legend":"GC Generation 2 collects per 1000 operations",
+                  "NumberFormat":"#0.0000",
+                  "UnitType":0,
+                  "Unit":"Count",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":2
+               }
+            },{
+               "Value":175984,
+               "Descriptor":{
+                  "Id":"Allocated Memory",
+                  "DisplayName":"Allocated",
+                  "Legend":"Allocated memory per single operation (managed only, inclusive, 1KB = 1024B)",
+                  "NumberFormat":"0.##",
+                  "UnitType":2,
+                  "Unit":"B",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":3
+               }
+            },{
+               "Value":0,
+               "Descriptor":{
+                  "Id":"CompletedWorkItemCount",
+                  "DisplayName":"Completed Work Items",
+                  "Legend":"The number of work items that have been processed in ThreadPool (per single operation)",
+                  "NumberFormat":"#0.0000",
+                  "UnitType":0,
+                  "Unit":"Count",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":0
+               }
+            },{
+               "Value":0,
+               "Descriptor":{
+                  "Id":"LockContentionCount",
+                  "DisplayName":"Lock Contentions",
+                  "Legend":"The number of times there was contention upon trying to take a Monitor's lock (per single operation)",
+                  "NumberFormat":"#0.0000",
+                  "UnitType":0,
+                  "Unit":"Count",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":0
+               }
+            }
+         ]
+      },{
+         "DisplayInfo":"MemoryAllocationBenchmarks.ZSet_RepeatedAdditions: Dry(IterationCount=1, LaunchCount=1, RunStrategy=ColdStart, UnrollFactor=1, WarmupCount=1) [OperationCount=10000]",
+         "Namespace":"DBSP.Tests.Performance",
+         "Type":"MemoryAllocationBenchmarks",
+         "Method":"ZSet_RepeatedAdditions",
+         "MethodTitle":"ZSet_RepeatedAdditions",
+         "Parameters":"OperationCount=10000",
+         "FullName":"DBSP.Tests.Performance.Phase5_1_DataStructureBenchmarks+MemoryAllocationBenchmarks.ZSet_RepeatedAdditions(OperationCount: 10000)",
+         "HardwareIntrinsics":"AdvSIMD,AES,CRC32,DP,RDM,SHA1,SHA256 VectorSize=128",
+         "Statistics":{
+            "OriginalValues":[
+               1006517334
+            ],
+            "N":1,
+            "Min":1006517334,
+            "LowerFence":1006517334,
+            "Q1":1006517334,
+            "Median":1006517334,
+            "Mean":1006517334,
+            "Q3":1006517334,
+            "UpperFence":1006517334,
+            "Max":1006517334,
+            "InterquartileRange":0,
+            "LowerOutliers":[
+               
+            ],
+            "UpperOutliers":[
+               
+            ],
+            "AllOutliers":[
+               
+            ],
+            "StandardError":0,
+            "Variance":0,
+            "StandardDeviation":0,
+            "Skewness":"",
+            "Kurtosis":"",
+            "ConfidenceInterval":{
+               "N":1,
+               "Mean":1006517334,
+               "StandardError":0,
+               "Level":12,
+               "Margin":"",
+               "Lower":"",
+               "Upper":""
+            },
+            "Percentiles":{
+               "P0":1006517334,
+               "P25":1006517334,
+               "P50":1006517334,
+               "P67":1006517334,
+               "P80":1006517334,
+               "P85":1006517334,
+               "P90":1006517334,
+               "P95":1006517334,
+               "P100":1006517334
+            }
+         },
+         "Memory":{
+            "Gen0Collections":526,
+            "Gen1Collections":219,
+            "Gen2Collections":0,
+            "TotalOperations":1,
+            "BytesAllocatedPerOperation":4404629440
+         },
+         "Measurements":[
+            {
+               "IterationMode":"Workload",
+               "IterationStage":"Actual",
+               "LaunchIndex":1,
+               "IterationIndex":1,
+               "Operations":1,
+               "Nanoseconds":1006517334
+            },{
+               "IterationMode":"Workload",
+               "IterationStage":"Result",
+               "LaunchIndex":1,
+               "IterationIndex":1,
+               "Operations":1,
+               "Nanoseconds":1006517334
+            }
+         ],
+         "Metrics":[
+            {
+               "Value":526000,
+               "Descriptor":{
+                  "Id":"Gen0Collects",
+                  "DisplayName":"Gen0",
+                  "Legend":"GC Generation 0 collects per 1000 operations",
+                  "NumberFormat":"#0.0000",
+                  "UnitType":0,
+                  "Unit":"Count",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":0
+               }
+            },{
+               "Value":219000,
+               "Descriptor":{
+                  "Id":"Gen1Collects",
+                  "DisplayName":"Gen1",
+                  "Legend":"GC Generation 1 collects per 1000 operations",
+                  "NumberFormat":"#0.0000",
+                  "UnitType":0,
+                  "Unit":"Count",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":1
+               }
+            },{
+               "Value":0,
+               "Descriptor":{
+                  "Id":"Gen2Collects",
+                  "DisplayName":"Gen2",
+                  "Legend":"GC Generation 2 collects per 1000 operations",
+                  "NumberFormat":"#0.0000",
+                  "UnitType":0,
+                  "Unit":"Count",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":2
+               }
+            },{
+               "Value":4404629440,
+               "Descriptor":{
+                  "Id":"Allocated Memory",
+                  "DisplayName":"Allocated",
+                  "Legend":"Allocated memory per single operation (managed only, inclusive, 1KB = 1024B)",
+                  "NumberFormat":"0.##",
+                  "UnitType":2,
+                  "Unit":"B",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":3
+               }
+            },{
+               "Value":0,
+               "Descriptor":{
+                  "Id":"CompletedWorkItemCount",
+                  "DisplayName":"Completed Work Items",
+                  "Legend":"The number of work items that have been processed in ThreadPool (per single operation)",
+                  "NumberFormat":"#0.0000",
+                  "UnitType":0,
+                  "Unit":"Count",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":0
+               }
+            },{
+               "Value":0,
+               "Descriptor":{
+                  "Id":"LockContentionCount",
+                  "DisplayName":"Lock Contentions",
+                  "Legend":"The number of times there was contention upon trying to take a Monitor's lock (per single operation)",
+                  "NumberFormat":"#0.0000",
+                  "UnitType":0,
+                  "Unit":"Count",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":0
+               }
+            }
+         ]
+      },{
+         "DisplayInfo":"MemoryAllocationBenchmarks.ZSet_BatchConstruction: Dry(IterationCount=1, LaunchCount=1, RunStrategy=ColdStart, UnrollFactor=1, WarmupCount=1) [OperationCount=10000]",
+         "Namespace":"DBSP.Tests.Performance",
+         "Type":"MemoryAllocationBenchmarks",
+         "Method":"ZSet_BatchConstruction",
+         "MethodTitle":"ZSet_BatchConstruction",
+         "Parameters":"OperationCount=10000",
+         "FullName":"DBSP.Tests.Performance.Phase5_1_DataStructureBenchmarks+MemoryAllocationBenchmarks.ZSet_BatchConstruction(OperationCount: 10000)",
+         "HardwareIntrinsics":"AdvSIMD,AES,CRC32,DP,RDM,SHA1,SHA256 VectorSize=128",
+         "Statistics":{
+            "OriginalValues":[
+               4840583
+            ],
+            "N":1,
+            "Min":4840583,
+            "LowerFence":4840583,
+            "Q1":4840583,
+            "Median":4840583,
+            "Mean":4840583,
+            "Q3":4840583,
+            "UpperFence":4840583,
+            "Max":4840583,
+            "InterquartileRange":0,
+            "LowerOutliers":[
+               
+            ],
+            "UpperOutliers":[
+               
+            ],
+            "AllOutliers":[
+               
+            ],
+            "StandardError":0,
+            "Variance":0,
+            "StandardDeviation":0,
+            "Skewness":"",
+            "Kurtosis":"",
+            "ConfidenceInterval":{
+               "N":1,
+               "Mean":4840583,
+               "StandardError":0,
+               "Level":12,
+               "Margin":"",
+               "Lower":"",
+               "Upper":""
+            },
+            "Percentiles":{
+               "P0":4840583,
+               "P25":4840583,
+               "P50":4840583,
+               "P67":4840583,
+               "P80":4840583,
+               "P85":4840583,
+               "P90":4840583,
+               "P95":4840583,
+               "P100":4840583
+            }
+         },
+         "Memory":{
+            "Gen0Collections":0,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":1,
+            "BytesAllocatedPerOperation":1759984
+         },
+         "Measurements":[
+            {
+               "IterationMode":"Workload",
+               "IterationStage":"Actual",
+               "LaunchIndex":1,
+               "IterationIndex":1,
+               "Operations":1,
+               "Nanoseconds":4840583
+            },{
+               "IterationMode":"Workload",
+               "IterationStage":"Result",
+               "LaunchIndex":1,
+               "IterationIndex":1,
+               "Operations":1,
+               "Nanoseconds":4840583
+            }
+         ],
+         "Metrics":[
+            {
+               "Value":0,
+               "Descriptor":{
+                  "Id":"Gen0Collects",
+                  "DisplayName":"Gen0",
+                  "Legend":"GC Generation 0 collects per 1000 operations",
+                  "NumberFormat":"#0.0000",
+                  "UnitType":0,
+                  "Unit":"Count",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":0
+               }
+            },{
+               "Value":0,
+               "Descriptor":{
+                  "Id":"Gen1Collects",
+                  "DisplayName":"Gen1",
+                  "Legend":"GC Generation 1 collects per 1000 operations",
+                  "NumberFormat":"#0.0000",
+                  "UnitType":0,
+                  "Unit":"Count",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":1
+               }
+            },{
+               "Value":0,
+               "Descriptor":{
+                  "Id":"Gen2Collects",
+                  "DisplayName":"Gen2",
+                  "Legend":"GC Generation 2 collects per 1000 operations",
+                  "NumberFormat":"#0.0000",
+                  "UnitType":0,
+                  "Unit":"Count",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":2
+               }
+            },{
+               "Value":1759984,
+               "Descriptor":{
+                  "Id":"Allocated Memory",
+                  "DisplayName":"Allocated",
+                  "Legend":"Allocated memory per single operation (managed only, inclusive, 1KB = 1024B)",
+                  "NumberFormat":"0.##",
+                  "UnitType":2,
+                  "Unit":"B",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":3
+               }
+            },{
+               "Value":0,
+               "Descriptor":{
+                  "Id":"CompletedWorkItemCount",
+                  "DisplayName":"Completed Work Items",
+                  "Legend":"The number of work items that have been processed in ThreadPool (per single operation)",
+                  "NumberFormat":"#0.0000",
+                  "UnitType":0,
+                  "Unit":"Count",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":0
+               }
+            },{
+               "Value":0,
+               "Descriptor":{
+                  "Id":"LockContentionCount",
+                  "DisplayName":"Lock Contentions",
+                  "Legend":"The number of times there was contention upon trying to take a Monitor's lock (per single operation)",
+                  "NumberFormat":"#0.0000",
+                  "UnitType":0,
+                  "Unit":"Count",
+                  "TheGreaterTheBetter":false,
+                  "PriorityInCategory":0
+               }
+            }
+         ]
+      }
+   ]
+}

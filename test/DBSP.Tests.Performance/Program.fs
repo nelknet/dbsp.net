@@ -39,6 +39,15 @@ let main args =
         typeof<DataStructureBenchmarks.DataStructureComparisonBenchmarks>
         typeof<DataStructureBenchmarks.ZSetOperationBenchmarks>
         
+        // Advanced data structure comparison benchmarks
+        typeof<DataStructureComparisonBenchmarks.DataStructureCoreBenchmarks>
+        typeof<DataStructureComparisonBenchmarks.ZSetOperationBenchmarks>
+        typeof<DataStructureComparisonBenchmarks.MemoryAllocationBenchmarks>
+        typeof<DataStructureComparisonBenchmarks.CacheLocalityBenchmarks>
+        typeof<AlgebraicDispatchBenchmarks.AlgebraicDispatchBenchmarks>
+        typeof<AlgebraicDispatchBenchmarks.MemoryAllocationAnalysis>
+        typeof<AlgebraicDispatchBenchmarks.StructVsRefTypeBenchmarks>
+        
         // Operator performance benchmarks
         typeof<OperatorBenchmarks.LinearOperatorBenchmarks>
         typeof<OperatorBenchmarks.BinaryOperatorBenchmarks>

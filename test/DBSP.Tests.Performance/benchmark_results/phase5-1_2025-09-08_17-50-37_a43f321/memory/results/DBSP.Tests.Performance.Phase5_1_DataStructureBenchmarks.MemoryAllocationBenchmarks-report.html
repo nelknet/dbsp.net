@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>DBSP.Tests.Performance.Phase5_1_DataStructureBenchmarks.MemoryAllocationBenchmarks-20250908-175049</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet v0.15.2, macOS Sequoia 15.6.1 (24G90) [Darwin 24.6.0]
+Apple M4 Max, 1 CPU, 16 logical and 16 physical cores
+.NET SDK 10.0.100-preview.7.25380.108
+  [Host]     : .NET 9.0.8 (9.0.825.36511), Arm64 RyuJIT AdvSIMD DEBUG
+  DefaultJob : .NET 9.0.8 (9.0.825.36511), Arm64 RyuJIT AdvSIMD
+</code></pre>
+<pre><code></code></pre>
+
+<table>
+<thead><tr><th>Method          </th><th>OperationCount</th><th>Mean   </th><th>Error </th><th>StdDev</th><th>Ratio</th><th>Completed Work Items</th><th>Lock Contentions</th><th>Gen0 </th><th>Gen1 </th><th>Allocated</th><th>Alloc Ratio</th>
+</tr>
+</thead><tbody><tr><td>ZSet_RepeatedAdditions</td><td>1000</td><td>7,098.78 &mu;s</td><td>41.022 &mu;s</td><td>36.365 &mu;s</td><td>1.000</td><td>-</td><td>-</td><td>5304.6875</td><td>992.1875</td><td>43352.55 KB</td><td>1.000</td>
+</tr><tr><td>ZSet_BatchConstruction</td><td>1000</td><td>38.85 &mu;s</td><td>0.115 &mu;s</td><td>0.102 &mu;s</td><td>0.005</td><td>-</td><td>-</td><td>20.9961</td><td>4.5776</td><td>171.83 KB</td><td>0.004</td>
+</tr><tr><td>ZSet_RepeatedAdditions</td><td>10000</td><td>884,894.43 &mu;s</td><td>7,780.130 &mu;s</td><td>6,074.214 &mu;s</td><td>1.000</td><td>-</td><td>-</td><td>526000.0000</td><td>219000.0000</td><td>4301395.94 KB</td><td>1.000</td>
+</tr><tr><td>ZSet_BatchConstruction</td><td>10000</td><td>562.91 &mu;s</td><td>11.017 &mu;s</td><td>10.821 &mu;s</td><td>0.001</td><td>-</td><td>-</td><td>209.9609</td><td>93.7500</td><td>1718.7 KB</td><td>0.000</td>
+</tr></tbody></table>
+</body>
+</html>
