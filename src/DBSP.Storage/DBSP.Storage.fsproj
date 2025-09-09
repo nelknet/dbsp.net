@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Collections.Immutable" Version="1.0.0" />
+    <PackageReference Include="FSharp.Data.Adaptive" Version="1.2.25" />
+    <PackageReference Include="System.Collections.Immutable" Version="9.0.9" />
+    <PackageReference Include="ZoneTree" Version="1.8.5" />
+    <PackageReference Include="MessagePack.FSharpExtensions" Version="4.0.0" />
+    <PackageReference Include="FSharp.Collections.ParallelSeq" Version="1.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DBSP.Core\DBSP.Core.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Serialization.fs" />
+    <Compile Include="Storage.fs" />
+    <Compile Include="LSMStorage.fs" />
+    <Compile Include="Spilling.fs" />
+    <Compile Include="TemporalStorage.fs" />
+    <!-- Temporal storage is evolving; kept out of build until interfaces stabilize -->
+    <!-- <Compile Include="TemporalStorage.fs" /> -->
+    <!-- <Compile Include="MemorySpilling.fs" /> -->
+  </ItemGroup>
+
+</Project>

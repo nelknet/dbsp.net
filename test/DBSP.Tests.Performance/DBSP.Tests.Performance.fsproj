@@ -22,6 +22,7 @@
     <ProjectReference Include="..\..\src\DBSP.Core\DBSP.Core.fsproj" />
     <ProjectReference Include="..\..\src\DBSP.Operators\DBSP.Operators.fsproj" />
     <ProjectReference Include="..\..\src\DBSP.Circuit\DBSP.Circuit.fsproj" />
+    <ProjectReference Include="..\..\src\DBSP.Storage\DBSP.Storage.fsproj" />
   </ItemGroup>
 
   <ItemGroup>

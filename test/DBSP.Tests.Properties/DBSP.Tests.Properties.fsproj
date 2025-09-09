@@ -14,12 +14,14 @@
     <Compile Include="Algebraic.Properties.fs" />
     <Compile Include="Incremental.Properties.fs" />
     <Compile Include="Circuit.Properties.fs" />
+    <Compile Include="Storage.Properties.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.0" />
     <PackageReference Include="FsCheck" Version="3.3.1" />
+    <PackageReference Include="FsCheck.NUnit" Version="3.3.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageReference Include="NUnit" Version="3.14.0" />
     <PackageReference Include="NUnit.Analyzers" Version="3.9.0" />
@@ -28,6 +30,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\DBSP.Core\DBSP.Core.fsproj" />
+    <ProjectReference Include="..\..\src\DBSP.Storage\DBSP.Storage.fsproj" />
     <ProjectReference Include="..\..\src\DBSP.Operators\DBSP.Operators.fsproj" />
     <ProjectReference Include="..\..\src\DBSP.Circuit\DBSP.Circuit.fsproj" />
   </ItemGroup>

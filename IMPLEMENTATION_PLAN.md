@@ -701,18 +701,25 @@ dotnet test
 - **Performance Validation**: Benchmarking shows .NET-native patterns achieve equivalent performance with better maintainability and cross-platform support
 
 ### Phase 5.3: Persistent Storage Backend Implementation
-- [ ] **Storage abstraction design**: Design pluggable storage backend architecture following Feldera patterns
-- [ ] **Multi-tier storage system**: Implement memory, file-based, and cloud storage backends with async I/O
-- [ ] **Trace storage optimization**: Implement efficient temporal trace storage with cache-friendly designs
-- [ ] **Buffer cache system**: LRU caching with intelligent memory management and prefetching
-- [ ] **Storage format design**: Zero-copy serialization with System.Text.Json or MessagePack
+- [ ] **Storage abstraction design**: Design pluggable storage backend with ISerializer interface for flexibility
+- [ ] **LSM tree implementation**: Build on ZoneTree for high-performance persistent storage with Z-set semantics
+- [ ] **Memory spilling system**: Implement adaptive memory pressure monitoring and automatic spilling to disk
+- [ ] **Temporal trace storage**: Implement spine structure with multi-level merging for time-indexed data
+- [ ] **Serialization layer**: Pluggable serialization with MessagePack.FSharpExtensions as initial implementation
+
+**Implementation Notes:**
+- **Serialization Strategy**: Pluggable ISerializer interface allows swapping serializers without breaking changes
+- **Storage Engine**: ZoneTree LSM tree adapted for DBSP's Z-set semantics and temporal ordering
+- **Memory Management**: Adaptive spilling based on GC pressure and configurable thresholds
+- **Performance Focus**: HashMap instead of F# Map for O(1) operations, Task-based async (not F# async)
+- **Deferred to 5.4**: Checkpointing, fault tolerance, and recovery mechanisms
 
 ### Phase 5.4: Fault Tolerance and Advanced Features
-- [ ] **Checkpointing system**: Implement circuit state persistence with async state serialization
-- [ ] **Recovery mechanisms**: Fault-tolerant restart with operator state restoration
+- [ ] **Checkpointing system**: Implement circuit-wide consistent checkpoints with operator state snapshots
+- [ ] **Recovery mechanisms**: Restore circuit state from checkpoints with exactly-once semantics
+- [ ] **WAL integration**: Write-ahead logging for durability and crash recovery
 - [ ] **Window operators**: Create time-based and row-based windowing with watermark support
-- [ ] **Exactly-once processing**: Implement journaling and replay capabilities for input streams
-- [ ] **Production monitoring**: Advanced observability with metrics collection and debugging tools
+- [ ] **Production monitoring**: Advanced observability with storage metrics and debugging tools
 
 ### Phase 6: Performance Validation and Production Features
 - [ ] Comprehensive BenchmarkDotNet performance validation across all components

@@ -1,0 +1,9 @@
+<Project>
+  <PropertyGroup>
+    <!-- Force vstest to use console output mode to avoid logging test stdout as MSBuild warnings. -->
+    <VsTestUseMSBuildOutput>false</VsTestUseMSBuildOutput>
+    <!-- Optional: reduce test runner chatter -->
+    <VSTestNoLogo>true</VSTestNoLogo>
+    <VSTestVerbosity>minimal</VSTestVerbosity>
+  </PropertyGroup>
+</Project>

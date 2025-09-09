@@ -11,6 +11,7 @@
     <Compile Include="Handles.fs" />
     <Compile Include="Runtime.fs" />
     <Compile Include="ParallelRuntime.fs" />
+    <Compile Include="StorageIntegration.fs" />
     <Compile Include="BatchOptimization.fs" />
     <Compile Include="SpanOptimizations.fs" />
     <Compile Include="Optimizer.fs" />
@@ -21,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\DBSP.Core\DBSP.Core.fsproj" />
     <ProjectReference Include="..\DBSP.Operators\DBSP.Operators.fsproj" />
+    <ProjectReference Include="..\DBSP.Storage\DBSP.Storage.fsproj" />
   </ItemGroup>
 
   <ItemGroup>
