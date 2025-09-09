@@ -299,39 +299,4 @@ module StructOptimizedCollections =
             if this.hasValue then ValueOption<'U>.Some(f this.value)
             else ValueOption<'U>.None
 
-/// Benchmark helpers for Phase 5.1 evaluation
-module BenchmarkHelpers =
-    
-    /// Generate realistic DBSP workload patterns
-    let generateDBSPWorkload (size: int) (insertRatio: float) (updateRatio: float) =
-        let random = Random(42)
-        seq {
-            for _ in 1 .. size do
-                let operation = random.NextDouble()
-                if operation < insertRatio then
-                    yield (random.Next(0, size), 1) // Insert
-                elif operation < insertRatio + updateRatio then
-                    yield (random.Next(0, size), random.Next(-5, 6)) // Update
-                else
-                    yield (random.Next(0, size), -1) // Delete
-        }
-    
-    /// Memory usage measurement helper
-    let measureMemoryUsage (f: unit -> 'T) =
-        GC.Collect()
-        GC.WaitForPendingFinalizers() 
-        GC.Collect()
-        
-        let memBefore = GC.GetTotalMemory(false)
-        let result = f()
-        let memAfter = GC.GetTotalMemory(false)
-        
-        (result, memAfter - memBefore)
-    
-    /// Cache miss simulation helper
-    let createCacheHostileData (size: int) =
-        let random = Random(42)
-        // Create data that will cause cache misses
-        Array.init size (fun _ -> random.Next()) 
-        |> Array.sortBy (fun _ -> random.Next())
-        |> Array.mapi (fun i x -> (x, i))
+// Benchmark helpers moved to test project where they belong

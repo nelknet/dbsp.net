@@ -8,7 +8,7 @@ open BenchmarkDotNet.Attributes
 open BenchmarkDotNet.Diagnosers
 open FSharp.Data.Adaptive
 open DBSP.Core.ZSet
-open DBSP.Core.ZSetOptimized
+// ZSetOptimized functionality is now integrated directly into DBSP.Core.ZSet
 
 /// Quick data structure comparison (completes in <30 seconds)
 [<MemoryDiagnoser>]
@@ -61,7 +61,7 @@ type MemoryHotspotBenchmarks() =
     [<Benchmark>]
     member this.Optimized_BuilderPattern() =
         // Optimized pattern using builder to avoid intermediate allocations
-        ZSetOptimized.buildZSet (fun builder ->
+        ZSet.buildZSet (fun builder ->
             for i in 1 .. this.OperationCount do
                 builder.Add(i, 1)
         )
