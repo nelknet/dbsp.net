@@ -27,9 +27,9 @@ type StorageTests() =
         do! storage.StoreBatch([ (1, "One", 1L); (1, "One", -1L); (2, "Two", 3L) ])
         let! r1 = storage.Get 1
         let! r2 = storage.Get 2
-        Assert.IsTrue(r1.IsNone)
+        Assert.That(r1.IsNone, Is.True)
         match r2 with
-        | Some (v,w) -> Assert.AreEqual("Two", v); Assert.AreEqual(3L, w)
+        | Some (v,w) -> Assert.That(v, Is.EqualTo "Two"); Assert.That(w, Is.EqualTo 3L)
         | None -> Assert.Fail("expected value")
     }
 
@@ -44,8 +44,8 @@ type StorageTests() =
         do! spine.InsertBatch(2L, [| struct (1, "A", 1L); struct (3, "C", -1L) |])
         let! at1 = spine.QueryAtTime 1L
         let! at2 = spine.QueryAtTime 2L
-        Assert.AreEqual(2, at1.Length)
-        Assert.IsTrue(at2 |> Array.exists (fun struct (k,_,_) -> k = 1))
+        Assert.That(at1.Length, Is.EqualTo 2)
+        Assert.That(at2 |> Array.exists (fun struct (k,_,_) -> k = 1), Is.True)
     }
 
     [<Test>]
@@ -63,5 +63,5 @@ type StorageTests() =
         // Act
         do! StorageIntegration.forceSpill circuit 0.0
         // Assert
-        Assert.IsTrue(!spillTriggered)
+        Assert.That(!spillTriggered, Is.True)
     }

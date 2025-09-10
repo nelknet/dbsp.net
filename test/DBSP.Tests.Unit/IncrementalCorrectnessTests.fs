@@ -36,7 +36,7 @@ type IncrementalCorrectnessTests() =
                 let! transformed = mapOperator.EvalAsync(delta)
                 incrementalResult <- ZSet.add incrementalResult transformed
             
-            Assert.AreEqual(batchResult, incrementalResult)
+            Assert.That(incrementalResult, Is.EqualTo batchResult)
         }
     
     /// Test that incremental filter produces same result as batch filter
@@ -62,7 +62,7 @@ type IncrementalCorrectnessTests() =
                 let! filtered = filterOperator.EvalAsync(delta)
                 incrementalResult <- ZSet.add incrementalResult filtered
             
-            Assert.AreEqual(batchResult, incrementalResult)
+            Assert.That(incrementalResult, Is.EqualTo batchResult)
         }
     
     /// Test operator composition maintains correctness
@@ -93,7 +93,7 @@ type IncrementalCorrectnessTests() =
                 let! filtered = filterOperator.EvalAsync(transformed)
                 incrementalResult <- ZSet.add incrementalResult filtered
             
-            Assert.AreEqual(batchResult, incrementalResult)
+            Assert.That(incrementalResult, Is.EqualTo batchResult)
         }
     
     /// Test that order of deltas doesn't affect final result for commutative operations
@@ -121,7 +121,7 @@ type IncrementalCorrectnessTests() =
                 let! transformed = mapOp2.EvalAsync(delta)
                 result2 <- ZSet.add result2 transformed
             
-            Assert.AreEqual(result1, result2)
+            Assert.That(result2, Is.EqualTo result1)
         }
     
     /// Test with larger dataset to validate scalability
@@ -154,13 +154,13 @@ type IncrementalCorrectnessTests() =
                 incrementalResult <- ZSet.add incrementalResult mapped
             
             // Verify batch and incremental produce the same result
-            Assert.AreEqual(batchResult, incrementalResult)
+            Assert.That(incrementalResult, Is.EqualTo batchResult)
             
             // Check expected final state: 2,4,5,6,7,8,9,10,11 (after removing 1,3)
             // Transformed: 4,8,10,12,14,16,18,20,22
             let expectedKeys = [4; 8; 10; 12; 14; 16; 18; 20; 22] |> Set.ofList
             let actualKeys = batchResult.Keys |> Set.ofSeq
-            Assert.AreEqual(expectedKeys, actualKeys)
+            Assert.That(actualKeys, Is.EqualTo expectedKeys)
         }
     
     /// Test negative weights (deletions) maintain correctness
@@ -190,10 +190,10 @@ type IncrementalCorrectnessTests() =
                 let! transformed = mapOp.EvalAsync(delta)
                 incrementalResult <- ZSet.add incrementalResult transformed
             
-            Assert.AreEqual(batchResult, incrementalResult)
+            Assert.That(incrementalResult, Is.EqualTo batchResult)
             
             // Final result should only contain elements 4 and 5 (transformed)
             let expectedFinal = ZSet.ofList [(40, 1); (50, 1)]
-            Assert.AreEqual(expectedFinal, batchResult)
-            Assert.AreEqual(expectedFinal, incrementalResult)
+            Assert.That(batchResult, Is.EqualTo expectedFinal)
+            Assert.That(incrementalResult, Is.EqualTo expectedFinal)
         }

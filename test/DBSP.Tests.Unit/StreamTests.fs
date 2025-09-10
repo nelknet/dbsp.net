@@ -11,26 +11,26 @@ type StreamBasicOperationTests() =
     [<Test>]
     member _.``empty stream is indeed empty``() =
         let stream = Stream.empty<int>
-        Assert.IsTrue(stream.IsEmpty)
-        Assert.AreEqual(None, stream.LatestTimestamp)
+        Assert.That(stream.IsEmpty, Is.True)
+        Assert.That(stream.LatestTimestamp, Is.EqualTo None)
 
     [<Test>]
     member _.``singleton stream contains single value``() =
         let stream = Stream.singleton 100L 42
-        Assert.IsFalse(stream.IsEmpty)
-        Assert.AreEqual(Some 42, stream.GetValueAt(100L))
-        Assert.AreEqual(Some 100L, stream.LatestTimestamp)
+        Assert.That(stream.IsEmpty, Is.False)
+        Assert.That(stream.GetValueAt(100L), Is.EqualTo (Some 42))
+        Assert.That(stream.LatestTimestamp, Is.EqualTo (Some 100L))
 
     [<Test>]
     member _.``ofSeq creates stream correctly``() =
         let data = [(10L, "a"); (20L, "b"); (30L, "c")]
         let stream = Stream.ofSeq data
         
-        Assert.AreEqual(Some "a", stream.GetValueAt(10L))
-        Assert.AreEqual(Some "b", stream.GetValueAt(20L))
-        Assert.AreEqual(Some "c", stream.GetValueAt(30L))
-        Assert.AreEqual(None, stream.GetValueAt(40L))
-        Assert.AreEqual(Some 30L, stream.LatestTimestamp)
+        Assert.That(stream.GetValueAt(10L), Is.EqualTo (Some "a"))
+        Assert.That(stream.GetValueAt(20L), Is.EqualTo (Some "b"))
+        Assert.That(stream.GetValueAt(30L), Is.EqualTo (Some "c"))
+        Assert.That(stream.GetValueAt(40L), Is.EqualTo None)
+        Assert.That(stream.LatestTimestamp, Is.EqualTo (Some 30L))
 
     [<Test>]
     member _.``toSeq returns ordered sequence``() =
@@ -39,7 +39,7 @@ type StreamBasicOperationTests() =
         let result = Stream.toSeq stream |> Seq.toList
         
         let expected = [(10L, "a"); (20L, "b"); (30L, "c")]
-        Assert.AreEqual(expected, result)
+        Assert.That(result, Is.EqualTo expected)
 
     [<Test>]
     member _.``timestamps property returns sorted timestamps``() =
@@ -47,7 +47,7 @@ type StreamBasicOperationTests() =
         let stream = Stream.ofSeq data
         let timestamps = stream.Timestamps |> Seq.toList
         
-        Assert.AreEqual([10L; 20L; 30L], timestamps)
+        Assert.That(timestamps, Is.EqualTo [10L; 20L; 30L])
 
     [<Test>]
     member _.``combine works with custom combiner``() =
@@ -55,78 +55,77 @@ type StreamBasicOperationTests() =
         let stream2 = Stream.ofSeq [(10L, 2); (30L, 4)]
         let combined = Stream.combine stream1 stream2 (+)
         
-        Assert.AreEqual(Some 7, combined.GetValueAt(10L))  // 5 + 2
-        Assert.AreEqual(Some 3, combined.GetValueAt(20L))  // 3 + 0 (no value at 20L in stream2)
-        Assert.AreEqual(Some 4, combined.GetValueAt(30L))  // 0 + 4
-        Assert.AreEqual(Some 30L, combined.LatestTimestamp)
+        Assert.That(combined.GetValueAt(10L), Is.EqualTo (Some 7))
+        Assert.That(combined.GetValueAt(20L), Is.EqualTo (Some 3))
+        Assert.That(combined.GetValueAt(30L), Is.EqualTo (Some 4))
+        Assert.That(combined.LatestTimestamp, Is.EqualTo (Some 30L))
 
     [<Test>]
     member _.``insertAt with integer addition``() =
         let stream = Stream.singleton 10L 5
         let updated = Stream.insertAt 10L 3 stream
         
-        Assert.AreEqual(Some 8, updated.GetValueAt(10L)) // 5 + 3
+        Assert.That(updated.GetValueAt(10L), Is.EqualTo (Some 8)) // 5 + 3
 
     [<Test>]
     member _.``integrateWith with string concatenation``() =
         let stream = Stream.ofSeq [(10L, "hello"); (20L, " world")]
         let integrated = Stream.integrateWith stream "" (+)
         
-        Assert.AreEqual(Some "hello", integrated.GetValueAt(10L)) 
-        Assert.AreEqual(Some "hello world", integrated.GetValueAt(20L))
+        Assert.That(integrated.GetValueAt(10L), Is.EqualTo (Some "hello")) 
+        Assert.That(integrated.GetValueAt(20L), Is.EqualTo (Some "hello world"))
 
     [<Test>]
     member _.``delay shifts all timestamps``() =
         let stream = Stream.ofSeq [(10L, "a"); (20L, "b")]
         let delayed = Stream.delay 5L stream
         
-        Assert.AreEqual(Some "a", delayed.GetValueAt(15L)) // 10 + 5
-        Assert.AreEqual(Some "b", delayed.GetValueAt(25L)) // 20 + 5
-        Assert.AreEqual(None, delayed.GetValueAt(10L))
-        Assert.AreEqual(None, delayed.GetValueAt(20L))
+        Assert.That(delayed.GetValueAt(15L), Is.EqualTo (Some "a")) // 10 + 5
+        Assert.That(delayed.GetValueAt(25L), Is.EqualTo (Some "b")) // 20 + 5
+        Assert.That(delayed.GetValueAt(10L), Is.EqualTo None)
+        Assert.That(delayed.GetValueAt(20L), Is.EqualTo None)
 
     [<Test>]
     member _.``integrate computes cumulative sums correctly``() =
         let stream = Stream.ofSeq [(10L, 3); (20L, 2); (30L, 1)]
         let integrated = Stream.integrate stream  // Uses SRTP constraints for int
         
-        Assert.AreEqual(Some 3, integrated.GetValueAt(10L)) // 0 + 3
-        Assert.AreEqual(Some 5, integrated.GetValueAt(20L)) // 3 + 2  
-        Assert.AreEqual(Some 6, integrated.GetValueAt(30L)) // 5 + 1
+        Assert.That(integrated.GetValueAt(10L), Is.EqualTo (Some 3)) // 0 + 3
+        Assert.That(integrated.GetValueAt(20L), Is.EqualTo (Some 5)) // 3 + 2  
+        Assert.That(integrated.GetValueAt(30L), Is.EqualTo (Some 6)) // 5 + 1
 
     [<Test>]
     member _.``filterByTime works correctly``() =
         let stream = Stream.ofSeq [(10L, "a"); (20L, "b"); (30L, "c")]
         let filtered = Stream.filterByTime (fun t -> t >= 20L) stream
         
-        Assert.AreEqual(None, filtered.GetValueAt(10L))
-        Assert.AreEqual(Some "b", filtered.GetValueAt(20L))
-        Assert.AreEqual(Some "c", filtered.GetValueAt(30L))
+        Assert.That(filtered.GetValueAt(10L), Is.EqualTo None)
+        Assert.That(filtered.GetValueAt(20L), Is.EqualTo (Some "b"))
+        Assert.That(filtered.GetValueAt(30L), Is.EqualTo (Some "c"))
 
     [<Test>]
     member _.``filterByValue works correctly``() =
         let stream = Stream.ofSeq [(10L, "apple"); (20L, "banana"); (30L, "apricot")]
         let filtered = Stream.filterByValue (fun (s: string) -> s.StartsWith("a")) stream
         
-        Assert.AreEqual(Some "apple", filtered.GetValueAt(10L))
-        Assert.AreEqual(None, filtered.GetValueAt(20L)) // "banana" filtered out
-        Assert.AreEqual(Some "apricot", filtered.GetValueAt(30L))
+        Assert.That(filtered.GetValueAt(10L), Is.EqualTo (Some "apple"))
+        Assert.That(filtered.GetValueAt(20L), Is.EqualTo None) // "banana" filtered out
+        Assert.That(filtered.GetValueAt(30L), Is.EqualTo (Some "apricot"))
 
     [<Test>]
     member _.``mapValues transforms values correctly``() =
         let stream = Stream.ofSeq [(10L, 5); (20L, 3); (30L, 2)]
         let mapped = Stream.mapValues (fun x -> x * 2) stream
         
-        Assert.AreEqual(Some 10, mapped.GetValueAt(10L))
-        Assert.AreEqual(Some 6, mapped.GetValueAt(20L))
-        Assert.AreEqual(Some 4, mapped.GetValueAt(30L))
+        Assert.That(mapped.GetValueAt(10L), Is.EqualTo (Some 10))
+        Assert.That(mapped.GetValueAt(20L), Is.EqualTo (Some 6))
+        Assert.That(mapped.GetValueAt(30L), Is.EqualTo (Some 4))
 
 [<TestFixture>]
 type StreamPropertyTests() =
 
-    [<Test>]
-    member _.``combine is commutative with commutative combiner``() =
-        let property (data1: (int64 * int) list) (data2: (int64 * int) list) =
+    [<FsCheck.NUnit.Property>]
+    member _.``combine is commutative with commutative combiner``(data1: (int64 * int) list, data2: (int64 * int) list) =
             // Filter to positive timestamps to avoid issues
             let filteredData1 = data1 |> List.filter (fun (t, _) -> t >= 0L)
             let filteredData2 = data2 |> List.filter (fun (t, _) -> t >= 0L)
@@ -146,14 +145,10 @@ type StreamPropertyTests() =
                     |> Seq.distinct
                     |> Seq.toList
                 
-                allTimestamps |> List.forall (fun t ->
-                    result1.GetValueAt(t) = result2.GetValueAt(t))
-        
-        Check.QuickThrowOnFailure property
+                allTimestamps |> List.forall (fun t -> result1.GetValueAt(t) = result2.GetValueAt(t))
 
-    [<Test>]
-    member _.``delay preserves stream structure``() =
-        let property (offset: int64) (data: (int64 * int) list) =
+    [<FsCheck.NUnit.Property>]
+    member _.``delay preserves stream structure``(offset: int64, data: (int64 * int) list) =
             // Use positive offset and timestamps, and ensure unique timestamps
             let safeOffset = abs offset + 1L
             let uniqueData = 
@@ -172,5 +167,3 @@ type StreamPropertyTests() =
                 uniqueData |> List.forall (fun (originalTime, value) ->
                     let newTime = originalTime + safeOffset
                     delayed.GetValueAt(newTime) = Some value)
-        
-        Check.QuickThrowOnFailure property

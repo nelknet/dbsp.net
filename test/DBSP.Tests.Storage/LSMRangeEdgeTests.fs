@@ -20,7 +20,7 @@ let ``Empty range when start greater than end`` () = task {
     let lsm = LSMStorageBackend<int,int>(cfg, ser)
     do! lsm.StoreBatchWithFlush([ for i in 1 .. 10 -> (i, i, 1L) ], true)
     let! it = (lsm :> IStorageBackend<int,int>).GetRangeIterator(Some 8) (Some 3)
-    Assert.AreEqual(0, it |> Seq.length)
+    Assert.That(it |> Seq.length, Is.EqualTo 0)
 }
 
 [<Test>]
@@ -33,7 +33,7 @@ let ``Start None returns items up to end inclusive`` () = task {
     do! lsm.StoreBatchWithFlush([ for i in 1 .. 10 -> (i, i, 1L) ], true)
     let! it = (lsm :> IStorageBackend<int,int>).GetRangeIterator(None) (Some 5)
     let arr = it |> Seq.map (fun (k,_,_) -> k) |> Seq.toArray
-    Assert.AreEqual([|1;2;3;4;5|], arr)
+    Assert.That(arr, Is.EqualTo [|1;2;3;4;5|])
 }
 
 [<Test>]
@@ -46,7 +46,7 @@ let ``End None returns items from start inclusive`` () = task {
     do! lsm.StoreBatchWithFlush([ for i in 1 .. 7 -> (i, i, 1L) ], true)
     let! it = (lsm :> IStorageBackend<int,int>).GetRangeIterator(Some 4) None
     let arr = it |> Seq.map (fun (k,_,_) -> k) |> Seq.toArray
-    Assert.AreEqual([|4;5;6;7|], arr)
+    Assert.That(arr, Is.EqualTo [|4;5;6;7|])
 }
 
 [<Test>]
@@ -59,5 +59,5 @@ let ``Range over non-existent start still returns greater keys`` () = task {
     do! lsm.StoreBatchWithFlush([ 2, 20, 1L; 4, 40, 1L; 6, 60, 1L ], true)
     let! it = (lsm :> IStorageBackend<int,int>).GetRangeIterator(Some 3) (Some 5)
     let arr = it |> Seq.map (fun (k,_,_) -> k) |> Seq.toArray
-    Assert.AreEqual([|4|], arr)
+    Assert.That(arr, Is.EqualTo [|4|])
 }

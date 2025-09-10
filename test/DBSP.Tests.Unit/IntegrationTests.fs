@@ -35,14 +35,14 @@ type GeneratorIntegrateInspectTests() =
                 
                 // Verify incremental accumulation
                 accumulatedResult <- ZSet.add accumulatedResult generated
-                Assert.AreEqual(accumulatedResult, integrated, $"Step {step} accumulation mismatch")
+                Assert.That(integrated, Is.EqualTo accumulatedResult, $"Step {step} accumulation mismatch")
             
             // Verify inspector captured all values
-            Assert.AreEqual(5, inspectedValues.Length)
+            Assert.That(inspectedValues.Length, Is.EqualTo 5)
             
             // Final result should contain all generated values
             let expectedFinal = ZSet.ofList [(1, 1); (2, 1); (3, 1); (4, 1); (5, 1)]
-            Assert.AreEqual(expectedFinal, integrator.CurrentValue)
+            Assert.That(integrator.CurrentValue, Is.EqualTo expectedFinal)
         }
     
     /// Test Generator -> Map -> Integrate workflow  
@@ -63,10 +63,10 @@ type GeneratorIntegrateInspectTests() =
                 
                 // Verify each step
                 let expectedGenerated = ZSet.singleton (step * 2) 1
-                Assert.AreEqual(expectedGenerated, generated, $"Generated value mismatch at step {step}")
+                Assert.That(generated, Is.EqualTo expectedGenerated, $"Generated value mismatch at step {step}")
                 
                 let expectedMapped = ZSet.singleton ((step * 2) * (step * 2)) 1
-                Assert.AreEqual(expectedMapped, mapped, $"Mapped value mismatch at step {step}")
+                Assert.That(mapped, Is.EqualTo expectedMapped, $"Mapped value mismatch at step {step}")
                 
                 expectedAccum <- ZSet.add expectedAccum mapped
                 Assert.AreEqual(expectedAccum, integrated, $"Integration mismatch at step {step}")

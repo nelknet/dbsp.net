@@ -34,10 +34,10 @@ type ComplexJoinOperatorTests() =
         // Debug output
         printfn "Left outer join result: %A" resultList
         
-        Assert.AreEqual(3, resultList.Length, sprintf "Expected 3 results but got %d: %A" resultList.Length resultList)
-        Assert.IsTrue(resultList |> List.exists (fun ((k, v1, v2), _) -> k = 1 && v1 = "a" && v2 = Some 1.0))
-        Assert.IsTrue(resultList |> List.exists (fun ((k, v1, v2), _) -> k = 2 && v1 = "b" && v2 = Some 2.0))
-        Assert.IsTrue(resultList |> List.exists (fun ((k, v1, v2), _) -> k = 3 && v1 = "c" && v2 = None))
+        Assert.That(resultList.Length, Is.EqualTo 3, sprintf "Expected 3 results but got %d: %A" resultList.Length resultList)
+        Assert.That(resultList |> List.exists (fun ((k, v1, v2), _) -> k = 1 && v1 = "a" && v2 = Some 1.0), Is.True)
+        Assert.That(resultList |> List.exists (fun ((k, v1, v2), _) -> k = 2 && v1 = "b" && v2 = Some 2.0), Is.True)
+        Assert.That(resultList |> List.exists (fun ((k, v1, v2), _) -> k = 3 && v1 = "c" && v2 = None), Is.True)
     }
     
     [<Test>]
@@ -51,10 +51,10 @@ type ComplexJoinOperatorTests() =
         
         let resultList = ZSet.toSeq result |> Seq.sortBy fst |> List.ofSeq
         
-        Assert.AreEqual(3, resultList.Length)
-        Assert.IsTrue(resultList |> List.exists (fun ((k, v1, v2), _) -> k = 1 && v1 = Some "a" && v2 = 1.0))
-        Assert.IsTrue(resultList |> List.exists (fun ((k, v1, v2), _) -> k = 2 && v1 = Some "b" && v2 = 2.0))
-        Assert.IsTrue(resultList |> List.exists (fun ((k, v1, v2), _) -> k = 3 && v1 = None && v2 = 3.0))
+        Assert.That(resultList.Length, Is.EqualTo 3)
+        Assert.That(resultList |> List.exists (fun ((k, v1, v2), _) -> k = 1 && v1 = Some "a" && v2 = 1.0), Is.True)
+        Assert.That(resultList |> List.exists (fun ((k, v1, v2), _) -> k = 2 && v1 = Some "b" && v2 = 2.0), Is.True)
+        Assert.That(resultList |> List.exists (fun ((k, v1, v2), _) -> k = 3 && v1 = None && v2 = 3.0), Is.True)
     }
     
     [<Test>]
@@ -68,11 +68,11 @@ type ComplexJoinOperatorTests() =
         
         let resultList = ZSet.toSeq result |> Seq.sortBy fst |> List.ofSeq
         
-        Assert.AreEqual(4, resultList.Length)
-        Assert.IsTrue(resultList |> List.exists (fun ((k, v1, v2), _) -> k = 1 && v1 = Some "a" && v2 = Some 1.0))
-        Assert.IsTrue(resultList |> List.exists (fun ((k, v1, v2), _) -> k = 2 && v1 = Some "b" && v2 = None))
-        Assert.IsTrue(resultList |> List.exists (fun ((k, v1, v2), _) -> k = 3 && v1 = None && v2 = Some 3.0))
-        Assert.IsTrue(resultList |> List.exists (fun ((k, v1, v2), _) -> k = 4 && v1 = Some "d" && v2 = Some 4.0))
+        Assert.That(resultList.Length, Is.EqualTo 4)
+        Assert.That(resultList |> List.exists (fun ((k, v1, v2), _) -> k = 1 && v1 = Some "a" && v2 = Some 1.0), Is.True)
+        Assert.That(resultList |> List.exists (fun ((k, v1, v2), _) -> k = 2 && v1 = Some "b" && v2 = None), Is.True)
+        Assert.That(resultList |> List.exists (fun ((k, v1, v2), _) -> k = 3 && v1 = None && v2 = Some 3.0), Is.True)
+        Assert.That(resultList |> List.exists (fun ((k, v1, v2), _) -> k = 4 && v1 = Some "d" && v2 = Some 4.0), Is.True)
     }
     
     [<Test>]
@@ -86,10 +86,10 @@ type ComplexJoinOperatorTests() =
         
         let resultList = ZSet.toSeq result |> Seq.sortBy fst |> List.ofSeq
         
-        Assert.AreEqual(2, resultList.Length)
-        Assert.IsTrue(resultList |> List.exists (fun ((k, v), _) -> k = 1 && v = "a"))
-        Assert.IsTrue(resultList |> List.exists (fun ((k, v), _) -> k = 3 && v = "c"))
-        Assert.IsFalse(resultList |> List.exists (fun ((k, v), _) -> k = 2))
+        Assert.That(resultList.Length, Is.EqualTo 2)
+        Assert.That(resultList |> List.exists (fun ((k, v), _) -> k = 1 && v = "a"), Is.True)
+        Assert.That(resultList |> List.exists (fun ((k, v), _) -> k = 3 && v = "c"), Is.True)
+        Assert.That(resultList |> List.exists (fun ((k, v), _) -> k = 2), Is.False)
     }
     
     [<Test>]
@@ -103,10 +103,10 @@ type ComplexJoinOperatorTests() =
         
         let resultList = ZSet.toSeq result |> Seq.sortBy fst |> List.ofSeq
         
-        Assert.AreEqual(1, resultList.Length)
-        Assert.IsTrue(resultList |> List.exists (fun ((k, v), _) -> k = 2 && v = "b"))
-        Assert.IsFalse(resultList |> List.exists (fun ((k, v), _) -> k = 1))
-        Assert.IsFalse(resultList |> List.exists (fun ((k, v), _) -> k = 3))
+        Assert.That(resultList.Length, Is.EqualTo 1)
+        Assert.That(resultList |> List.exists (fun ((k, v), _) -> k = 2 && v = "b"), Is.True)
+        Assert.That(resultList |> List.exists (fun ((k, v), _) -> k = 1), Is.False)
+        Assert.That(resultList |> List.exists (fun ((k, v), _) -> k = 3), Is.False)
     }
     
     [<Test>]
@@ -120,11 +120,11 @@ type ComplexJoinOperatorTests() =
         
         let resultList = ZSet.toSeq result |> Seq.sortBy fst |> List.ofSeq
         
-        Assert.AreEqual(4, resultList.Length)
-        Assert.IsTrue(resultList |> List.exists (fun ((v1, v2), _) -> v1 = "a" && v2 = 1))
-        Assert.IsTrue(resultList |> List.exists (fun ((v1, v2), _) -> v1 = "a" && v2 = 2))
-        Assert.IsTrue(resultList |> List.exists (fun ((v1, v2), _) -> v1 = "b" && v2 = 1))
-        Assert.IsTrue(resultList |> List.exists (fun ((v1, v2), _) -> v1 = "b" && v2 = 2))
+        Assert.That(resultList.Length, Is.EqualTo 4)
+        Assert.That(resultList |> List.exists (fun ((v1, v2), _) -> v1 = "a" && v2 = 1), Is.True)
+        Assert.That(resultList |> List.exists (fun ((v1, v2), _) -> v1 = "a" && v2 = 2), Is.True)
+        Assert.That(resultList |> List.exists (fun ((v1, v2), _) -> v1 = "b" && v2 = 1), Is.True)
+        Assert.That(resultList |> List.exists (fun ((v1, v2), _) -> v1 = "b" && v2 = 2), Is.True)
     }
     
     [<Test>]
@@ -147,8 +147,8 @@ type ComplexJoinOperatorTests() =
         let result2List = ZSet.toSeq result2 |> List.ofSeq
         
         // Should have new left record (3, "c", None) and updated match (2, "b", Some 2.0)
-        Assert.IsTrue(result2List |> List.exists (fun ((k, v1, v2), _) -> k = 3 && v1 = "c" && v2 = None))
-        Assert.IsTrue(result2List |> List.exists (fun ((k, v1, v2), _) -> k = 2 && v1 = "b" && v2 = Some 2.0))
+        Assert.That(result2List |> List.exists (fun ((k, v1, v2), _) -> k = 3 && v1 = "c" && v2 = None), Is.True)
+        Assert.That(result2List |> List.exists (fun ((k, v1, v2), _) -> k = 2 && v1 = "b" && v2 = Some 2.0), Is.True)
     }
     
     [<Test>]
@@ -163,7 +163,7 @@ type ComplexJoinOperatorTests() =
         
         // result1 should have keys 2,3
         let result1List = ZSet.toSeq result1 |> List.ofSeq
-        Assert.AreEqual(2, result1List.Length)
+        Assert.That(result1List.Length, Is.EqualTo 2)
         
         // Now add key 2 to right
         let leftData2 = ZSet.empty<int * string>
@@ -173,7 +173,7 @@ type ComplexJoinOperatorTests() =
         
         // result2 should contain negative weight for (2, "b") since it's no longer in anti-join
         let result2List = ZSet.toSeq result2 |> List.ofSeq
-        Assert.IsTrue(result2List |> List.exists (fun ((k, v), w) -> k = 2 && v = "b" && w = -1))
+        Assert.That(result2List |> List.exists (fun ((k, v), w) -> k = 2 && v = "b" && w = -1), Is.True)
     }
     
     [<Test>]
@@ -188,8 +188,8 @@ type ComplexJoinOperatorTests() =
         let resultList = ZSet.toSeq result |> List.ofSeq
         
         // Weights should be multiplied
-        Assert.IsTrue(resultList |> List.exists (fun ((v1, v2), w) -> v1 = "a" && v2 = 1 && w = 2))
-        Assert.IsTrue(resultList |> List.exists (fun ((v1, v2), w) -> v1 = "a" && v2 = 2 && w = 4))
-        Assert.IsTrue(resultList |> List.exists (fun ((v1, v2), w) -> v1 = "b" && v2 = 1 && w = 3))
-        Assert.IsTrue(resultList |> List.exists (fun ((v1, v2), w) -> v1 = "b" && v2 = 2 && w = 6))
+        Assert.That(resultList |> List.exists (fun ((v1, v2), w) -> v1 = "a" && v2 = 1 && w = 2), Is.True)
+        Assert.That(resultList |> List.exists (fun ((v1, v2), w) -> v1 = "a" && v2 = 2 && w = 4), Is.True)
+        Assert.That(resultList |> List.exists (fun ((v1, v2), w) -> v1 = "b" && v2 = 1 && w = 3), Is.True)
+        Assert.That(resultList |> List.exists (fun ((v1, v2), w) -> v1 = "b" && v2 = 2 && w = 6), Is.True)
     }

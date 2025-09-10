@@ -54,6 +54,8 @@ let main args =
         typeof<OperatorBenchmarks.AggregationOperatorBenchmarks>
         typeof<OperatorBenchmarks.JoinOperatorBenchmarks>
         typeof<OperatorBenchmarks.AsyncOverheadBenchmarks>
+        // Storage engine benchmarks
+        typeof<DBSP.Tests.Performance.StorageBenchmarks>
     |]
     
     let summary = switcher.Run(args, config)

@@ -85,8 +85,8 @@ type LSMStorageBackend<'K, 'V when 'K : comparison and 'V : comparison>
                     let mutable existing = 0L
                     let mutable keyCopy = kv
                     if w = 0L then
-                        let mutable _op = 0L
-                        zoneTree.TryDelete(&keyCopy, & _op) |> ignore
+                        // Zero-weight update is a no-op (do not delete existing state)
+                        ()
                     else
                         if zoneTree.TryGet(&keyCopy, &existing) then
                             let newW = existing + w
@@ -161,11 +161,11 @@ type LSMStorageBackend<'K, 'V when 'K : comparison and 'V : comparison>
             task {
                 // Force memtable forward then merge until no in-memory records remain
                 let m = zoneTree.Maintenance
-                let rec flushAll () =
+                let mutable remaining = m.InMemoryRecordCount
+                while remaining > 0L do
                     m.MoveMutableSegmentForward()
                     m.StartMergeOperation().Join() |> ignore
-                    if m.InMemoryRecordCount > 0L then flushAll()
-                flushAll()
+                    remaining <- m.InMemoryRecordCount
                 stats <- { stats with CompactionCount = stats.CompactionCount + 1; LastCompactionTime = Some DateTime.UtcNow }
             }
 
@@ -183,11 +183,11 @@ type LSMStorageBackend<'K, 'V when 'K : comparison and 'V : comparison>
             do! (this :> IStorageBackend<'K,'V>).StoreBatch(updates)
             if syncFlush then
                 let m = zoneTree.Maintenance
-                let rec flushAll () =
+                let mutable remaining = m.InMemoryRecordCount
+                while remaining > 0L do
                     m.MoveMutableSegmentForward()
                     m.StartMergeOperation().Join() |> ignore
-                    if m.InMemoryRecordCount > 0L then flushAll()
-                flushAll()
+                    remaining <- m.InMemoryRecordCount
         }
 
     member this.StoreBatch(updates: struct ('K * 'V * int64) array, syncFlush: bool) =
@@ -195,11 +195,11 @@ type LSMStorageBackend<'K, 'V when 'K : comparison and 'V : comparison>
             do! this.StoreBatch(updates)
             if syncFlush then
                 let m = zoneTree.Maintenance
-                let rec flushAll () =
+                let mutable remaining = m.InMemoryRecordCount
+                while remaining > 0L do
                     m.MoveMutableSegmentForward()
                     m.StartMergeOperation().Join() |> ignore
-                    if m.InMemoryRecordCount > 0L then flushAll()
-                flushAll()
+                    remaining <- m.InMemoryRecordCount
         }
 
     member this.GetIterator() : Task<seq<struct ('K * 'V * int64)>> =

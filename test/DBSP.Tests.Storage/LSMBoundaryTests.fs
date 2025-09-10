@@ -24,9 +24,9 @@ let ``Range over K includes negative V values`` () = task {
     do! storage.StoreBatchWithFlush([ (0, 100, 1L); (2, 200, 1L) ], true)
     let! it = (storage :> IStorageBackend<int,int>).GetRangeIterator(Some 1) (Some 1)
     let arr = it |> Seq.toArray
-    Assert.AreEqual(4, arr.Length)
+    Assert.That(arr.Length, Is.EqualTo 4)
     let vs = arr |> Array.map (fun (_,v,_) -> v) |> Array.sort
-    Assert.AreEqual([| -5; -1; 0; 3 |], vs)
+    Assert.That(vs, Is.EqualTo [| -5; -1; 0; 3 |])
 }
 
 [<Test>]
@@ -38,5 +38,5 @@ let ``Get returns some value for K even with negative V present`` () = task {
     let storage = LSMStorageBackend<int,int>(config, ser)
     do! storage.StoreBatchWithFlush([ (5, -10, 1L); (5, -2, 1L); (5, 7, 1L) ], true)
     let! r = (storage :> IStorageBackend<int,int>).Get 5
-    Assert.IsTrue(r.IsSome)
+    Assert.That(r.IsSome, Is.True)
 }

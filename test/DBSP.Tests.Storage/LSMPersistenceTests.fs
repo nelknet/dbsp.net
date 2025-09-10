@@ -29,6 +29,6 @@ let ``Persisted state survives reopen and matches pre-close state`` () = task {
     let lsm2 = LSMStorageBackend<int,string>(cfg, ser)
     let! after = (lsm2 :> IStorageBackend<int,string>).GetIterator()
     let afterArr = after |> Seq.toArray |> Array.sort
-    Assert.AreEqual(beforeArr, afterArr)
+    Assert.That(afterArr, Is.EqualTo beforeArr)
     do! (lsm2 :> IStorageBackend<int,string>).Dispose()
 }

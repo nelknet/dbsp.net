@@ -11,7 +11,7 @@ let ``MessagePackSerializer roundtrips record`` () =
     let recd = { Id = 1; Name = "Test"; Value = 3.14 }
     let bytes = ser.Serialize recd
     let recd2 = ser.Deserialize bytes
-    Assert.AreEqual(recd, recd2)
+    Assert.That(recd2, Is.EqualTo recd)
 
 [<Test>]
 let ``EstimateSize matches actual serialized length`` () =
@@ -19,7 +19,7 @@ let ``EstimateSize matches actual serialized length`` () =
     let recd = { Id = 42; Name = "Size"; Value = 1.23 }
     let estimated = ser.EstimateSize recd
     let actual = ser.Serialize recd |> Array.length
-    Assert.AreEqual(estimated, actual)
+    Assert.That(actual, Is.EqualTo estimated)
 
 type CustomSerializer<'T>() =
     interface ISerializer<'T> with
@@ -37,7 +37,7 @@ let ``SerializerFactory returns working default serializer`` () =
     let recd = { Id = 7; Name = "X"; Value = 0.5 }
     let bytes = ser.Serialize recd
     let back = ser.Deserialize bytes
-    Assert.AreEqual(recd, back)
+    Assert.That(back, Is.EqualTo recd)
 
 [<Test>]
 let ``SerializerFactory honors custom factory`` () =
@@ -45,7 +45,7 @@ let ``SerializerFactory honors custom factory`` () =
     SerializerFactory.SetDefaultFactory(System.Func<_>(fun () -> custom))
     try
         let got = SerializerFactory.GetDefault<TestRecord>()
-        Assert.AreSame(custom, got)
+        Assert.That(got, Is.SameAs custom)
     finally
         // reset to messagepack for this type
         SerializerFactory.SetDefaultFactory(System.Func<_>(fun () -> SerializerFactory.CreateMessagePack<TestRecord>()))
@@ -55,7 +55,7 @@ let ``MessagePackSerializer handles option None`` () =
     let ser = MessagePackSerializer<TestRecord option>() :> ISerializer<TestRecord option>
     let bytes = ser.Serialize None
     let back = ser.Deserialize bytes
-    Assert.AreEqual(None, back)
+    Assert.That(back, Is.EqualTo None)
 
 [<Test>]
 let ``MessagePackSerializer roundtrips list of records`` () =
@@ -65,4 +65,4 @@ let ``MessagePackSerializer roundtrips list of records`` () =
                 { Id = 3; Name = "Third"; Value = 3.3 } ]
     let bytes = ser.Serialize lst
     let back = ser.Deserialize bytes
-    Assert.AreEqual(lst, back)
+    Assert.That(back, Is.EqualTo lst)

@@ -29,11 +29,11 @@ type ParallelRuntimeTests() =
         
         // Start and verify worker creation
         let startResult = runtime.StartAsync() |> Async.AwaitTask |> Async.RunSynchronously
-        Assert.AreEqual(Ok (), startResult)
+        Assert.That(startResult, Is.EqualTo (Ok ()))
         
         // Stop runtime
         let stopResult = runtime.StopAsync() |> Async.AwaitTask |> Async.RunSynchronously
-        Assert.AreEqual(Ok (), stopResult)
+        Assert.That(stopResult, Is.EqualTo (Ok ()))
     
     [<Test>]
     member _.``ThreadLocalManager should provide thread-local buffer caches``() = task {
@@ -41,12 +41,12 @@ type ParallelRuntimeTests() =
             Array.init 10 (fun i -> 
                 Task.Run(fun () ->
                     let cache = ThreadLocalManager.BufferCache
-                    Assert.IsNotNull(cache)
-                    Assert.AreEqual(0L, cache.BytesAllocated)
+                    Assert.That(cache, Is.Not.Null)
+                    Assert.That(cache.BytesAllocated, Is.EqualTo 0L)
                     
                     // Rent and return bytes
                     let buffer = cache.RentBytes(1024)
-                    Assert.AreEqual(1024, buffer.Length)
+                    Assert.That(buffer.Length, Is.EqualTo 1024)
                 )
             )
         
@@ -59,22 +59,22 @@ type ParallelRuntimeTests() =
         
         // Test small buffer
         let smallBuffer = cache.RentBytes(512)
-        Assert.GreaterOrEqual(smallBuffer.Length, 512)
+        Assert.That(smallBuffer.Length, Is.GreaterThanOrEqualTo 512)
         
         // Test medium buffer
         let mediumBuffer = cache.RentBytes(8192)
-        Assert.GreaterOrEqual(mediumBuffer.Length, 8192)
+        Assert.That(mediumBuffer.Length, Is.GreaterThanOrEqualTo 8192)
         
         // Test large buffer
         let largeBuffer = cache.RentBytes(65536)
-        Assert.GreaterOrEqual(largeBuffer.Length, 65536)
+        Assert.That(largeBuffer.Length, Is.GreaterThanOrEqualTo 65536)
     
     [<Test>]
     member _.``RuntimeMetrics should track execution correctly``() =
         let metrics = RuntimeMetrics.Zero
-        Assert.AreEqual(0L, metrics.StepsExecuted)
-        Assert.AreEqual(TimeSpan.Zero, metrics.TotalLatency)
-        Assert.AreEqual(0.0, metrics.CacheHitRatio)
+        Assert.That(metrics.StepsExecuted, Is.EqualTo 0L)
+        Assert.That(metrics.TotalLatency, Is.EqualTo TimeSpan.Zero)
+        Assert.That(metrics.CacheHitRatio, Is.EqualTo 0.0)
     
     [<Test>]
     member _.``OptimizedScheduler should handle priority correctly``() =
@@ -107,11 +107,11 @@ type ParallelRuntimeTests() =
         
         // High priority should be dequeued first
         match scheduler.TryGetNext() with
-        | Some op -> Assert.AreEqual("HighPriority", op.Name)
+        | Some op -> Assert.That(op.Name, Is.EqualTo "HighPriority")
         | None -> Assert.Fail("Expected high priority operator")
         
         match scheduler.TryGetNext() with
-        | Some op -> Assert.AreEqual("LowPriority", op.Name)
+        | Some op -> Assert.That(op.Name, Is.EqualTo "LowPriority")
         | None -> Assert.Fail("Expected low priority operator")
     
     [<Test>]
@@ -165,10 +165,10 @@ type ParallelRuntimeTests() =
         let executionOrder = scheduler.ExecutionOrder
         
         // Should be in dependency order: Op1, Op2, Op3
-        Assert.AreEqual(3, executionOrder.Length)
-        Assert.AreEqual(nodeId1, executionOrder.[0])
-        Assert.AreEqual(nodeId2, executionOrder.[1])
-        Assert.AreEqual(nodeId3, executionOrder.[2])
+        Assert.That(executionOrder.Length, Is.EqualTo 3)
+        Assert.That(executionOrder.[0], Is.EqualTo nodeId1)
+        Assert.That(executionOrder.[1], Is.EqualTo nodeId2)
+        Assert.That(executionOrder.[2], Is.EqualTo nodeId3)
 
 [<TestFixture>]
 type BatchOptimizationTests() =
@@ -179,26 +179,26 @@ type BatchOptimizationTests() =
         let controller = new AdaptiveBatchController(config)
         
         let initialSize = controller.CurrentBatchSize
-        Assert.AreEqual(config.TargetBatchSize, initialSize)
+        Assert.That(initialSize, Is.EqualTo config.TargetBatchSize)
         
         // Simulate low latency - should increase batch size
         for _ in 1..10 do
             controller.UpdateBatchSize(0.5, 10000.0)
         
-        Assert.Greater(controller.CurrentBatchSize, initialSize)
+        Assert.That(controller.CurrentBatchSize, Is.GreaterThan initialSize)
         
         // Simulate high latency - should decrease batch size
         for _ in 1..10 do
             controller.UpdateBatchSize(5.0, 1000.0)
         
         let sizeAfterHighLatency = controller.CurrentBatchSize
-        Assert.Less(sizeAfterHighLatency, initialSize)
+        Assert.That(sizeAfterHighLatency, Is.LessThan initialSize)
     
     [<Test>]
     member _.``FloatCircularBuffer should maintain correct average``() =
         let buffer = new FloatCircularBuffer(5)
         
-        Assert.IsFalse(buffer.IsFull)
+        Assert.That(buffer.IsFull, Is.False)
         
         buffer.Add(1.0)
         buffer.Add(2.0)
@@ -206,12 +206,12 @@ type BatchOptimizationTests() =
         buffer.Add(4.0)
         buffer.Add(5.0)
         
-        Assert.IsTrue(buffer.IsFull)
-        Assert.AreEqual(3.0, buffer.Average())
+        Assert.That(buffer.IsFull, Is.True)
+        Assert.That(buffer.Average(), Is.EqualTo 3.0)
         
         // Adding more should overwrite oldest
         buffer.Add(6.0)
-        Assert.AreEqual(4.0, buffer.Average()) // (2+3+4+5+6)/5 = 4
+        Assert.That(buffer.Average(), Is.EqualTo 4.0) // (2+3+4+5+6)/5 = 4
     
     [<Test>]
     member _.``ZSetBatchProcessor should batch operations correctly``() =
@@ -235,7 +235,7 @@ type BatchOptimizationTests() =
         let! result = TaskCoordination.whenAllWithTimeout [| slowTask; fastTask |] 100
         
         match result with
-        | Error msg -> Assert.IsTrue(msg.Contains("timeout"))
+        | Error msg -> Assert.That(msg.Contains("timeout"), Is.True)
         | Ok _ -> Assert.Fail("Should have timed out")
     }
     
@@ -246,9 +246,9 @@ type BatchOptimizationTests() =
         
         let! results = TaskCoordination.executePartitioned items processor 4
         
-        Assert.AreEqual(100, results.Length)
-        Assert.AreEqual(2, results.[0])
-        Assert.AreEqual(200, results.[99])
+        Assert.That(results.Length, Is.EqualTo 100)
+        Assert.That(results.[0], Is.EqualTo 2)
+        Assert.That(results.[99], Is.EqualTo 200)
     }
 
 [<TestFixture>]
@@ -259,9 +259,9 @@ type SpanOptimizationTests() =
         let mutable processor = SpanBasedProcessing.ArrayProcessor<int>(10)
         
         // Test adding items
-        Assert.IsTrue(processor.Add(1))
-        Assert.IsTrue(processor.Add(2))
-        Assert.IsTrue(processor.Add(3))
+        Assert.That(processor.Add(1), Is.True)
+        Assert.That(processor.Add(2), Is.True)
+        Assert.That(processor.Add(3), Is.True)
         
         // Test processing
         let mutable sum = 0
@@ -270,17 +270,17 @@ type SpanOptimizationTests() =
                 sum <- sum + buffer.[i]
         )
         
-        Assert.AreEqual(6, sum)
+        Assert.That(sum, Is.EqualTo 6)
     
     [<Test>]
     member _.``MemoryPoolManager should rent and return buffers``() =
         use poolManager = new SpanBasedProcessing.MemoryPoolManager<int>()
         
         let memory1 = poolManager.Rent(100)
-        Assert.GreaterOrEqual(memory1.Length, 100)
+        Assert.That(memory1.Length, Is.GreaterThanOrEqualTo 100)
         
         let memory2 = poolManager.Rent(200)
-        Assert.GreaterOrEqual(memory2.Length, 200)
+        Assert.That(memory2.Length, Is.GreaterThanOrEqualTo 200)
         
         poolManager.ReturnAll()
     
@@ -288,18 +288,18 @@ type SpanOptimizationTests() =
     member _.``SRTP sum should work with different numeric types``() =
         let intArray = [| 1; 2; 3; 4; 5 |]
         let intSum = SRTPOptimizedOperators.sum intArray
-        Assert.AreEqual(15, intSum)
+        Assert.That(intSum, Is.EqualTo 15)
         
         let floatArray = [| 1.0; 2.0; 3.0; 4.0; 5.0 |]
         let floatSum = SRTPOptimizedOperators.sum floatArray
-        Assert.AreEqual(15.0, floatSum)
+        Assert.That(floatSum, Is.EqualTo 15.0)
     
     [<Test>]
     member _.``InlineIfLambda map should produce correct results``() =
         let items = [| 1; 2; 3; 4; 5 |]
         let doubled = InlineIfLambdaOptimizations.mapOptimized (fun x -> x * 2) items
         
-        Assert.AreEqual([| 2; 4; 6; 8; 10 |], doubled)
+        Assert.That(doubled, Is.EqualTo [| 2; 4; 6; 8; 10 |])
     
     [<Test>]
     member _.``VectorizedSum should match regular sum``() =
@@ -307,12 +307,12 @@ type SpanOptimizationTests() =
         let regularSum = Array.sum data
         let vectorSum = VectorizedOperations.vectorizedSum data
         
-        Assert.AreEqual(regularSum, vectorSum)
+        Assert.That(vectorSum, Is.EqualTo regularSum)
     
     [<Test>]
     member _.``CacheLineAligned should prevent false sharing``() =
         let aligned = CacheOptimizations.CacheLineAligned<int>(42)
-        Assert.AreEqual(42, aligned.Value)
+        Assert.That(aligned.Value, Is.EqualTo 42)
         
         // Verify struct is designed for cache line alignment
         // F# generic struct sizes can't be queried directly with Marshal.SizeOf

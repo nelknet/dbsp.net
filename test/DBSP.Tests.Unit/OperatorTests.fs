@@ -16,20 +16,20 @@ type BasicOperatorTests() =
     [<Test>]
     member _.``MapOperator interface works`` () =
         let mapOp = MapOperator(fun x -> x * 2) :> IOperator
-        Assert.AreEqual("Map", mapOp.Name)
-        Assert.IsFalse(mapOp.IsAsync)
+        Assert.That(mapOp.Name, Is.EqualTo "Map")
+        Assert.That(mapOp.IsAsync, Is.False)
 
     [<Test>]
     member _.``UnionOperator interface works`` () =
         let unionOp = UnionOperator() :> IOperator
-        Assert.AreEqual("Union", unionOp.Name)
-        Assert.IsFalse(unionOp.IsAsync)
+        Assert.That(unionOp.Name, Is.EqualTo "Union")
+        Assert.That(unionOp.IsAsync, Is.False)
 
     [<Test>]
     member _.``InnerJoinOperator interface works`` () =
         let joinOp = InnerJoinOperator() :> IOperator
-        Assert.AreEqual("InnerJoin", joinOp.Name)
-        Assert.IsFalse(joinOp.IsAsync)
+        Assert.That(joinOp.Name, Is.EqualTo "InnerJoin")
+        Assert.That(joinOp.IsAsync, Is.False)
 
     [<Test>]
     member _.``Operators have correct metadata`` () =
@@ -37,9 +37,9 @@ type BasicOperatorTests() =
         let filterOp = ZSetFilterOperator(fun x -> x > 0) :> IOperator
         let groupOp = GroupByOperator(fun x -> x % 2) :> IOperator
         
-        Assert.AreEqual("Map", mapOp.Name)
-        Assert.AreEqual("ZSetFilter", filterOp.Name)
-        Assert.AreEqual("GroupBy", groupOp.Name)
+        Assert.That(mapOp.Name, Is.EqualTo "Map")
+        Assert.That(filterOp.Name, Is.EqualTo "ZSetFilter")
+        Assert.That(groupOp.Name, Is.EqualTo "GroupBy")
 
 [<TestFixture>]
 type OperatorCreationTests() =
@@ -50,9 +50,9 @@ type OperatorCreationTests() =
         let filterOp = LinearOperators.filter (fun x -> x > 0)
         let zsetMapOp = LinearOperators.zsetMap (fun x -> x * 2)
         
-        Assert.AreEqual("Map", mapOp.Name)
-        Assert.AreEqual("Filter", filterOp.Name)
-        Assert.AreEqual("ZSetMap", zsetMapOp.Name)
+        Assert.That(mapOp.Name, Is.EqualTo "Map")
+        Assert.That(filterOp.Name, Is.EqualTo "Filter")
+        Assert.That(zsetMapOp.Name, Is.EqualTo "ZSetMap")
 
     [<Test>]
     member _.``JoinOperators module functions work`` () =
@@ -60,9 +60,9 @@ type OperatorCreationTests() =
         let semiJoinOp = JoinOperators.semiJoin
         let antiJoinOp = JoinOperators.antiJoin
         
-        Assert.AreEqual("InnerJoin", innerJoinOp.Name)
-        Assert.AreEqual("SemiJoin", semiJoinOp.Name)
-        Assert.AreEqual("AntiJoin", antiJoinOp.Name)
+        Assert.That(innerJoinOp.Name, Is.EqualTo "InnerJoin")
+        Assert.That(semiJoinOp.Name, Is.EqualTo "SemiJoin")
+        Assert.That(antiJoinOp.Name, Is.EqualTo "AntiJoin")
 
     [<Test>]
     member _.``AggregateOperators module functions work`` () =
@@ -71,10 +71,10 @@ type OperatorCreationTests() =
         let floatSumOp = AggregateOperators.floatSum
         let avgOp = AggregateOperators.average
         
-        Assert.AreEqual("Count", countOp.Name)
-        Assert.AreEqual("IntSum", intSumOp.Name)
-        Assert.AreEqual("FloatSum", floatSumOp.Name)
-        Assert.AreEqual("Average", avgOp.Name)
+        Assert.That(countOp.Name, Is.EqualTo "Count")
+        Assert.That(intSumOp.Name, Is.EqualTo "IntSum")
+        Assert.That(floatSumOp.Name, Is.EqualTo "FloatSum")
+        Assert.That(avgOp.Name, Is.EqualTo "Average")
 
 [<TestFixture>]
 type SimpleAsyncTests() =
@@ -83,7 +83,7 @@ type SimpleAsyncTests() =
     member _.``Simple map operation works asynchronously`` () = task {
         let mapOp = MapOperator(fun x -> x * 2) :> IUnaryOperator<int, int>
         let! result = mapOp.EvalAsync(5)
-        Assert.AreEqual(10, result)
+        Assert.That(result, Is.EqualTo 10)
     }
 
     [<Test>]
@@ -93,9 +93,9 @@ type SimpleAsyncTests() =
         let! result = filterOp.EvalAsync(zset)
         
         // Filter keeps keys where the key > 0, preserving original weights
-        Assert.AreEqual(3, result.GetWeight(1))   // Key 1 > 0, weight 3 preserved
-        Assert.AreEqual(-2, result.GetWeight(2))  // Key 2 > 0, weight -2 preserved  
-        Assert.AreEqual(1, result.GetWeight(3))   // Key 3 > 0, weight 1 preserved
+        Assert.That(result.GetWeight(1), Is.EqualTo 3)   // Key 1 > 0, weight 3 preserved
+        Assert.That(result.GetWeight(2), Is.EqualTo -2)  // Key 2 > 0, weight -2 preserved  
+        Assert.That(result.GetWeight(3), Is.EqualTo 1)   // Key 3 > 0, weight 1 preserved
     }
 
 [<TestFixture>]
@@ -108,8 +108,8 @@ type StatefulOperatorTests() =
         
         // Initially empty state
         let (leftState, rightState) = statefulOp.GetState()
-        Assert.IsTrue(leftState.IsEmpty)
-        Assert.IsTrue(rightState.IsEmpty)
+        Assert.That(leftState.IsEmpty, Is.True)
+        Assert.That(rightState.IsEmpty, Is.True)
         
         // Process some data
         let left = ZSet.ofList [((1, "a"), 1)]
@@ -119,6 +119,6 @@ type StatefulOperatorTests() =
         
         // State should now contain the processed data
         let (newLeftState, newRightState) = statefulOp.GetState()
-        Assert.IsFalse(newLeftState.IsEmpty)
-        Assert.IsFalse(newRightState.IsEmpty)
+        Assert.That(newLeftState.IsEmpty, Is.False)
+        Assert.That(newRightState.IsEmpty, Is.False)
     }

@@ -12,8 +12,8 @@ type IndexedZSetBasicTests() =
     [<Test>]
     member _.``empty IndexedZSet is indeed empty``() =
         let indexed = IndexedZSet.empty<int, string>
-        Assert.IsTrue(indexed.IsEmpty)
-        Assert.AreEqual(0, indexed.TotalCount)
+        Assert.That(indexed.IsEmpty, Is.True)
+        Assert.That(indexed.TotalCount, Is.EqualTo 0)
 
     [<Test>]
     member _.``ofSeq creates IndexedZSet correctly``() =
@@ -23,9 +23,9 @@ type IndexedZSetBasicTests() =
         let zset1 = indexed.GetZSet(1)
         let zset2 = indexed.GetZSet(2)
         
-        Assert.AreEqual(3, zset1.GetWeight("a"))
-        Assert.AreEqual(2, zset1.GetWeight("b"))
-        Assert.AreEqual(-1, zset2.GetWeight("c"))
+        Assert.That(zset1.GetWeight("a"), Is.EqualTo 3)
+        Assert.That(zset1.GetWeight("b"), Is.EqualTo 2)
+        Assert.That(zset2.GetWeight("c"), Is.EqualTo -1)
 
     [<Test>]
     member _.``groupBy creates correct index``() =
@@ -36,10 +36,10 @@ type IndexedZSetBasicTests() =
         let aGroup = indexed.GetZSet('a')
         let bGroup = indexed.GetZSet('b')
         
-        Assert.AreEqual(5, aGroup.GetWeight("apple"))
-        Assert.AreEqual(2, aGroup.GetWeight("apricot"))
-        Assert.AreEqual(3, bGroup.GetWeight("banana"))
-        Assert.AreEqual(4, bGroup.GetWeight("blueberry"))
+        Assert.That(aGroup.GetWeight("apple"), Is.EqualTo 5)
+        Assert.That(aGroup.GetWeight("apricot"), Is.EqualTo 2)
+        Assert.That(bGroup.GetWeight("banana"), Is.EqualTo 3)
+        Assert.That(bGroup.GetWeight("blueberry"), Is.EqualTo 4)
 
     [<Test>]
     member _.``fromZSet and toZSet are inverses``() =
@@ -49,9 +49,7 @@ type IndexedZSetBasicTests() =
         let backToZSet = IndexedZSet.toZSet indexed
         
         // Check that we get back equivalent ZSet
-        pairs |> List.iter (fun ((k, v), w) ->
-            Assert.AreEqual(w, backToZSet.GetWeight((k, v)))
-        )
+        pairs |> List.iter (fun ((k, v), w) -> Assert.That(backToZSet.GetWeight((k, v)), Is.EqualTo w))
 
     [<Test>]
     member _.``join produces cartesian product for matching keys``() =
@@ -61,21 +59,21 @@ type IndexedZSetBasicTests() =
         
         // For key 1: ("a", 2) × (10, 3) and ("a", 2) × (20, 1) = weights 6 and 2
         let result1 = joined.GetZSet(1)
-        Assert.AreEqual(6, result1.GetWeight(("a", 10))) // 2 * 3
-        Assert.AreEqual(2, result1.GetWeight(("a", 20))) // 2 * 1
+        Assert.That(result1.GetWeight(("a", 10)), Is.EqualTo 6) // 2 * 3
+        Assert.That(result1.GetWeight(("a", 20)), Is.EqualTo 2) // 2 * 1
         
         // Key 2 has no match in right, so no results
         let result2 = joined.GetZSet(2)
-        Assert.IsTrue(result2.IsEmpty)
+        Assert.That(result2.IsEmpty, Is.True)
 
     [<Test>]
     member _.``filterByKey works correctly``() =
         let indexed = IndexedZSet.ofSeq [(1, "a", 3); (2, "b", 2); (3, "c", 1)]
         let filtered = IndexedZSet.filterByKey (fun k -> k % 2 = 1) indexed
         
-        Assert.IsFalse(filtered.GetZSet(1).IsEmpty)
-        Assert.IsTrue(filtered.GetZSet(2).IsEmpty)
-        Assert.IsFalse(filtered.GetZSet(3).IsEmpty)
+        Assert.That(filtered.GetZSet(1).IsEmpty, Is.False)
+        Assert.That(filtered.GetZSet(2).IsEmpty, Is.True)
+        Assert.That(filtered.GetZSet(3).IsEmpty, Is.False)
 
     [<Test>]
     member _.``filterByValue works correctly``() =
@@ -83,12 +81,12 @@ type IndexedZSetBasicTests() =
         let filtered = IndexedZSet.filterByValue (fun (s: string) -> s.StartsWith("a")) indexed
         
         let zset1 = filtered.GetZSet(1)
-        Assert.AreEqual(3, zset1.GetWeight("apple"))
-        Assert.AreEqual(2, zset1.GetWeight("ant"))
-        Assert.AreEqual(0, zset1.GetWeight("other"))
+        Assert.That(zset1.GetWeight("apple"), Is.EqualTo 3)
+        Assert.That(zset1.GetWeight("ant"), Is.EqualTo 2)
+        Assert.That(zset1.GetWeight("other"), Is.EqualTo 0)
         
         let zset2 = filtered.GetZSet(2)
-        Assert.IsTrue(zset2.IsEmpty) // "banana" filtered out
+        Assert.That(zset2.IsEmpty, Is.True) // "banana" filtered out
 
 [<TestFixture>]
 type IndexedZSetAlgebraicTests() =
@@ -100,22 +98,22 @@ type IndexedZSetAlgebraicTests() =
         let result = IndexedZSet.add indexed1 indexed2
         
         let zset1 = result.GetZSet(1)
-        Assert.AreEqual(5, zset1.GetWeight("a")) // 3 + 2
-        Assert.AreEqual(1, zset1.GetWeight("c")) // 0 + 1
+        Assert.That(zset1.GetWeight("a"), Is.EqualTo 5) // 3 + 2
+        Assert.That(zset1.GetWeight("c"), Is.EqualTo 1) // 0 + 1
         
         let zset2 = result.GetZSet(2)
-        Assert.AreEqual(2, zset2.GetWeight("b")) // 2 + 0
+        Assert.That(zset2.GetWeight("b"), Is.EqualTo 2) // 2 + 0
         
         let zset3 = result.GetZSet(3)
-        Assert.AreEqual(-1, zset3.GetWeight("d")) // 0 + (-1)
+        Assert.That(zset3.GetWeight("d"), Is.EqualTo -1) // 0 + (-1)
 
     [<Test>]
     member _.``IndexedZSet negation flips all weights``() =
         let indexed = IndexedZSet.ofSeq [(1, "a", 3); (2, "b", -2)]
         let negated = IndexedZSet.negate indexed
         
-        Assert.AreEqual(-3, negated.GetZSet(1).GetWeight("a"))
-        Assert.AreEqual(2, negated.GetZSet(2).GetWeight("b"))
+        Assert.That(negated.GetZSet(1).GetWeight("a"), Is.EqualTo -3)
+        Assert.That(negated.GetZSet(2).GetWeight("b"), Is.EqualTo 2)
 
 [<TestFixture>]
 type IndexedZSetPropertyTests() =

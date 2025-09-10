@@ -15,6 +15,7 @@
     <Compile Include="ParallelExecutionBenchmarks.fs" />
     <Compile Include="OperatorBenchmarks.fs" />
     <Compile Include="CircuitBenchmarks.fs" />
+    <Compile Include="StorageBenchmarks.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

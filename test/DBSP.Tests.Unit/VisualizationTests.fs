@@ -23,10 +23,10 @@ type CircuitVisualizationTests() =
         let dotGraph = CircuitVisualization.generateDot circuit (Some "Test Circuit")
         
         // Verify DOT format structure
-        Assert.IsTrue(dotGraph.Contains("digraph"))
-        Assert.IsTrue(dotGraph.Contains("numbers"))
-        Assert.IsTrue(dotGraph.Contains("doubled"))
-        Assert.IsTrue(dotGraph.Contains("->"))
+        Assert.That(dotGraph.Contains("digraph"), Is.True)
+        Assert.That(dotGraph.Contains("numbers"), Is.True)
+        Assert.That(dotGraph.Contains("doubled"), Is.True)
+        Assert.That(dotGraph.Contains("->"), Is.True)
     
     [<Test>]
     member _.``CircuitVisualizer generates text representation`` () =
@@ -42,9 +42,9 @@ type CircuitVisualizationTests() =
         let textRepr = CircuitVisualization.generateTextRepresentation circuit
         
         // Verify text contains expected sections
-        Assert.IsTrue(textRepr.Contains("Circuit Topology:"))
-        Assert.IsTrue(textRepr.Contains("data1"))
-        Assert.IsTrue(textRepr.Contains("data2"))
+        Assert.That(textRepr.Contains("Circuit Topology:"), Is.True)
+        Assert.That(textRepr.Contains("data1"), Is.True)
+        Assert.That(textRepr.Contains("data2"), Is.True)
     
     [<Test>]
     member _.``CircuitVisualizer saves DOT file correctly`` () =
@@ -61,10 +61,10 @@ type CircuitVisualizationTests() =
             CircuitVisualization.saveDotFile circuit tempFile (Some "Sensor Processing")
             
             // Verify file exists and has content
-            Assert.IsTrue(File.Exists(tempFile))
+            Assert.That(File.Exists(tempFile), Is.True)
             let content = File.ReadAllText(tempFile)
-            Assert.Greater(content.Length, 50)
-            Assert.IsTrue(content.Contains("digraph"))
+            Assert.That(content.Length, Is.GreaterThan 50)
+            Assert.That(content.Contains("digraph"), Is.True)
             
         finally
             // Cleanup
@@ -95,14 +95,14 @@ type CircuitVisualizationTests() =
         let statistics = (CircuitVisualization.createVisualizer circuit).GetCircuitStatistics()
         
         // Verify statistics reflect complex topology
-        Assert.Greater(statistics.OperatorCount, 2)
-        Assert.Greater(statistics.ConnectionCount, 2)
-        Assert.Greater(statistics.ComplexityScore, 4)
+        Assert.That(statistics.OperatorCount, Is.GreaterThan 2)
+        Assert.That(statistics.ConnectionCount, Is.GreaterThan 2)
+        Assert.That(statistics.ComplexityScore, Is.GreaterThan 4)
         
         let dotGraph = CircuitVisualization.generateDot circuit None
         
         // Verify DOT contains branching structure - check length as proxy
-        Assert.Greater(dotGraph.Length, 200) // Complex circuit should have substantial DOT output
+        Assert.That(dotGraph.Length, Is.GreaterThan 200) // Complex circuit should have substantial DOT output
     
     [<Test>]
     member _.``CircuitVisualizer exports analysis data`` () =
@@ -118,8 +118,8 @@ type CircuitVisualizationTests() =
         let analysisData = CircuitVisualization.exportForAnalysis circuit
         
         // Verify export structure
-        Assert.IsNotNull(analysisData.Nodes)
-        Assert.IsNotNull(analysisData.Edges)  
-        Assert.IsNotNull(analysisData.Statistics)
-        Assert.Greater(analysisData.Nodes.Length, 0)
-        Assert.Greater(analysisData.Statistics.ComplexityScore, 0)
+        Assert.That(analysisData.Nodes, Is.Not.Null)
+        Assert.That(analysisData.Edges, Is.Not.Null)  
+        Assert.That(analysisData.Statistics, Is.Not.Null)
+        Assert.That(analysisData.Nodes.Length, Is.GreaterThan 0)
+        Assert.That(analysisData.Statistics.ComplexityScore, Is.GreaterThan 0)

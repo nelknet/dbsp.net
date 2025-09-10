@@ -17,10 +17,10 @@ type CircuitBuilderTests() =
                 input
             )
         
-        Assert.AreEqual(1, circuit.InputHandles.Count)
-        Assert.AreEqual(1, circuit.OutputHandles.Count)
-        Assert.IsTrue(circuit.InputHandles.ContainsKey("test_input"))
-        Assert.IsTrue(circuit.OutputHandles.ContainsKey("test_output"))
+        Assert.That(circuit.InputHandles.Count, Is.EqualTo 1)
+        Assert.That(circuit.OutputHandles.Count, Is.EqualTo 1)
+        Assert.That(circuit.InputHandles.ContainsKey("test_input"), Is.True)
+        Assert.That(circuit.OutputHandles.ContainsKey("test_output"), Is.True)
     
     [<Test>]
     member _.``CircuitBuilder generates unique node IDs`` () =
@@ -30,7 +30,7 @@ type CircuitBuilderTests() =
         let nodeId1 = builder.AddOperator("operator1", metadata)
         let nodeId2 = builder.AddOperator("operator2", metadata)
         
-        Assert.AreNotEqual(nodeId1, nodeId2)
+        Assert.That(nodeId1, Is.Not.EqualTo nodeId2)
 
 [<TestFixture>]  
 type CircuitRuntimeTests() =
@@ -46,15 +46,15 @@ type CircuitRuntimeTests() =
         
         // Start runtime
         let startResult = runtime.Start()
-        Assert.AreEqual(Ok (), startResult)
-        Assert.AreEqual(CircuitState.Running, runtime.State)
+        Assert.That(startResult, Is.EqualTo (Ok ()))
+        Assert.That(runtime.State, Is.EqualTo CircuitState.Running)
         
         // Execute step
         let! stepResult = runtime.ExecuteStepAsync()
         match stepResult with
         | Ok () -> Assert.Pass()
         | Error msg -> Assert.Fail($"Step execution failed: {msg}")
-        Assert.AreEqual(1L, runtime.StepsExecuted)
+        Assert.That(runtime.StepsExecuted, Is.EqualTo 1L)
     }
     
     [<Test>]
@@ -63,15 +63,15 @@ type CircuitRuntimeTests() =
         let runtime = CircuitRuntimeModule.create circuit RuntimeConfig.Default
         
         // Initial state
-        Assert.AreEqual(CircuitState.Created, runtime.State)
+        Assert.That(runtime.State, Is.EqualTo CircuitState.Created)
         
         // Start
         let _ = runtime.Start()
-        Assert.AreEqual(CircuitState.Running, runtime.State)
+        Assert.That(runtime.State, Is.EqualTo CircuitState.Running)
         
         // Pause
         let _ = runtime.Pause()
-        Assert.AreEqual(CircuitState.Paused, runtime.State)
+        Assert.That(runtime.State, Is.EqualTo CircuitState.Paused)
 
 [<TestFixture>]
 type HandleTests() =
@@ -91,8 +91,8 @@ type HandleTests() =
         
         // Should be able to read the sent data
         let (success, value) = inputHandle.Reader.TryRead()
-        Assert.IsTrue(success)
-        Assert.AreEqual(42, value)
+        Assert.That(success, Is.True)
+        Assert.That(value, Is.EqualTo 42)
     }
     
     [<Test>]
@@ -104,5 +104,5 @@ type HandleTests() =
         
         // Should cache current value
         let currentValue = outputHandle.GetCurrentValue()
-        Assert.AreEqual(Some "Hello", currentValue)
+        Assert.That(currentValue, Is.EqualTo (Some "Hello"))
     }

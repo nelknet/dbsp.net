@@ -8,8 +8,8 @@ let ``AdaptiveStorageManager exposes memory pressure`` () =
     let cfg = { DataPath = System.IO.Path.GetTempPath(); MaxMemoryBytes = 10_000_000L; CompactionThreshold = 10; WriteBufferSize = 1024; BlockCacheSize = 1_000_000L; SpillThreshold = 0.8 }
     let mgr = AdaptiveStorageManager(cfg)
     let pressure = mgr.GetMemoryPressure()
-    Assert.GreaterOrEqual(pressure, 0.0)
-    Assert.LessOrEqual(pressure, 1.0)
+    Assert.That(pressure, Is.GreaterThanOrEqualTo 0.0)
+    Assert.That(pressure, Is.LessThanOrEqualTo 1.0)
 
 [<Test>]
 let ``HybridStorage stores and retrieves under small cap`` () = task {
@@ -20,9 +20,9 @@ let ``HybridStorage stores and retrieves under small cap`` () = task {
     let! r1 = storage.Get 1
     let! r50 = storage.Get 50
     let! r100 = storage.Get 100
-    Assert.IsTrue(r1.IsSome)
-    Assert.IsTrue(r50.IsSome)
-    Assert.IsTrue(r100.IsSome)
+    Assert.That(r1.IsSome, Is.True)
+    Assert.That(r50.IsSome, Is.True)
+    Assert.That(r100.IsSome, Is.True)
 }
 
 [<Test>]
@@ -35,7 +35,7 @@ let ``HybridStorage merges duplicate keys by weight`` () = task {
     do! storage.StoreBatch([ (1, "V", -1L) ])
     let! r = storage.Get 1
     match r with
-    | Some (_,w) -> Assert.AreEqual(4L, w)
+    | Some (_,w) -> Assert.That(w, Is.EqualTo 4L)
     | None -> Assert.Fail("expected value")
 }
 
@@ -50,8 +50,8 @@ let ``HybridStorage iterates all entries`` () = task {
     do! storage.StoreBatch(batch2)
     let! it = storage.GetIterator()
     let arr = it |> Seq.toArray
-    Assert.AreEqual(100, arr.Length)
-    Assert.AreEqual([|1..100|], arr |> Array.map (fun (k,_,_) -> k))
+    Assert.That(arr.Length, Is.EqualTo 100)
+    Assert.That(arr |> Array.map (fun (k,_,_) -> k), Is.EqualTo [|1..100|])
 }
 
 [<Test>]
@@ -62,9 +62,9 @@ let ``HybridStorage supports range queries`` () = task {
     do! storage.StoreBatch([ for i in 1 .. 100 -> (i, $"V_{i}", 1L) ])
     let! it = storage.GetRangeIterator (Some 25) (Some 75)
     let arr = it |> Seq.toArray
-    Assert.AreEqual(51, arr.Length)
-    Assert.AreEqual(25, arr.[0] |> (fun (k,_,_) -> k))
-    Assert.AreEqual(75, arr.[arr.Length-1] |> (fun (k,_,_) -> k))
+    Assert.That(arr.Length, Is.EqualTo 51)
+    Assert.That(arr.[0] |> (fun (k,_,_) -> k), Is.EqualTo 25)
+    Assert.That(arr.[arr.Length-1] |> (fun (k,_,_) -> k), Is.EqualTo 75)
 }
 
 [<Test>]
@@ -72,4 +72,4 @@ let ``SpillCoordinator triggers at high pressure or large batch`` () =
     let sc = SpillCoordinator(0.8)
     let shouldSpill = sc.ShouldSpill(1_000_000_000L)
     // Just exercise path; environment-dependent
-    Assert.IsTrue(shouldSpill || not shouldSpill)
+    Assert.That(shouldSpill || not shouldSpill, Is.True)
