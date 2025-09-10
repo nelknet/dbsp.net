@@ -241,10 +241,10 @@ let circuit =
 
 Current performance characteristics (Phase 5.3):
 
-- **Throughput**: 1M+ updates/second for simple operators
-- **Latency**: Sub-millisecond for incremental updates
+- **Throughput**: 25K-1.4M updates/second depending on data size and structure
+- **Latency**: Microsecond to sub-millisecond for incremental updates
 - **Memory**: O(changes) space complexity
-- **Storage**: 100K+ ops/sec with LSM backend
+- **Storage**: 100K+ ops/sec write, 200K-500K ops/sec read
 - **Scaling**: Near-linear with CPU cores (85-95% efficiency)
 
 ## Getting Started
@@ -518,15 +518,23 @@ dotnet run -c Release --project test/DBSP.Tests.Performance -- --job short
 
 ### Performance Characteristics
 
+*Note: Performance measured on Apple M4 Max. Actual performance varies with data size and hardware.*
+
 | Operation | Throughput | Latency | Memory |
 |-----------|------------|---------|---------|
-| **ZSet Addition** | 10M ops/sec | <100ns | O(distinct keys) |
-| **Hash Join** | 1M ops/sec | <1μs | O(smaller relation) |
-| **Aggregation** | 5M ops/sec | <200ns | O(groups) |
-| **Filter** | 20M ops/sec | <50ns | O(1) |
-| **Map** | 15M ops/sec | <70ns | O(1) |
-| **Storage Write** | 100K ops/sec | <10μs | Adaptive |
-| **Storage Read** | 500K ops/sec | <2μs | Cached |
+| **ZSet Addition (100 items)** | 350K ops/sec | ~3μs | O(distinct keys) |
+| **ZSet Addition (1K items)** | 25K ops/sec | ~40μs | O(distinct keys) |
+| **ZSet Addition (10K items)** | 2K ops/sec | ~450μs | O(distinct keys) |
+| **FastZSet Addition (100 items)** | 1.4M ops/sec | ~700ns | O(distinct keys) |
+| **FastZSet Addition (1K items)** | 140K ops/sec | ~7μs | O(distinct keys) |
+| **Hash Join*** | 100K-1M ops/sec | 1-10μs | O(smaller relation) |
+| **Aggregation*** | 200K-1M ops/sec | 1-5μs | O(groups) |
+| **Filter*** | 1M-5M ops/sec | 200-1000ns | O(1) |
+| **Map*** | 1M-3M ops/sec | 300-1000ns | O(1) |
+| **Storage Write** | 100K ops/sec | ~10μs | Adaptive |
+| **Storage Read** | 200K-500K ops/sec | ~2μs | Cached |
+
+*Estimated based on data structure performance. Actual throughput depends on data characteristics and specific operations.
 
 ### Optimization Techniques
 
