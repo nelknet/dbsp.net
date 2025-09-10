@@ -56,6 +56,10 @@ let main args =
         typeof<OperatorBenchmarks.AsyncOverheadBenchmarks>
         // Storage engine benchmarks
         typeof<DBSP.Tests.Performance.StorageBenchmarks>
+        
+        // Phase 6 Profiling benchmarks
+        typeof<SimpleProfilingBenchmarks.CoreBottleneckBenchmarks>
+        typeof<SimpleProfilingBenchmarks.AllocationAnalysis>
     |]
     
     let summary = switcher.Run(args, config)
