@@ -9,6 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="AssemblySetup.fs" />
+    <Compile Include="TestConfiguration.fs" />
     <Compile Include="AlgebraTests.fs" />
     <Compile Include="ZSetTests.fs" />
     <Compile Include="IndexedZSetTests.fs" />

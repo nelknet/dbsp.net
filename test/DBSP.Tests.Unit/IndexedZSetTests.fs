@@ -5,6 +5,7 @@ open NUnit.Framework
 open FsCheck
 open DBSP.Core.ZSet
 open DBSP.Core.IndexedZSet
+open DBSP.Tests.Unit.TestConfiguration
 
 [<TestFixture>]
 type IndexedZSetBasicTests() =
@@ -149,4 +150,4 @@ type IndexedZSetPropertyTests() =
                     zset1.GetWeight(v) = zset2.GetWeight(v))
             )
         
-        Check.QuickThrowOnFailure property
+        Check.One(DBSP.Tests.Unit.TestConfiguration.QuickQuietConfig, property)

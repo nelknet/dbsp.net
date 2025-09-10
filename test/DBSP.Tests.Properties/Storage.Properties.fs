@@ -5,6 +5,7 @@ open FsCheck.FSharp
 open FsCheck.NUnit
 open NUnit.Framework
 open DBSP.Storage
+open DBSP.Tests.Properties.TestConfiguration
 open System
 open System.Collections.Generic
 
@@ -160,7 +161,7 @@ let ``Multi-batch application is equivalent to single-batch (stress)`` () =
         let left = coalesce leftRaw
         let right = coalesce rightRaw
         left = right
-    Check.One(Config.Quick, Prop.forAll (Arb.fromGen StorageGenerators.updateGen) property)
+    Check.One(TestConfiguration.QuickConfig, Prop.forAll (Arb.fromGen StorageGenerators.updateGen) property)
 
 open NUnit.Framework
 
@@ -206,7 +207,7 @@ type StoragePropertyTests_Remainder() =
             let a = ((lsmA :> IStorageBackend<int,int>).GetIterator()).GetAwaiter().GetResult() |> Seq.toArray |> Array.sort
             let b = ((lsmB :> IStorageBackend<int,int>).GetIterator()).GetAwaiter().GetResult() |> Seq.toArray |> Array.sort
             a = b
-        Check.One(Config.Quick, Prop.forAll (Arb.fromGen StorageGenerators.updateGen) property)
+        Check.One(TestConfiguration.QuickConfig, Prop.forAll (Arb.fromGen StorageGenerators.updateGen) property)
 
     [<FsCheck.NUnit.Property(MaxTest = 30, Arbitrary = [| typeof<StorageArbsQuick> |])>]
     [<Category("Slow")>]
@@ -241,7 +242,7 @@ type StoragePropertyTests_Remainder() =
             (lsm.Compact()).GetAwaiter().GetResult()
             let after2 = ((lsm :> IStorageBackend<int,int>).GetIterator()).GetAwaiter().GetResult() |> Seq.toArray |> Array.sort
             before = after1 && after1 = after2
-        Check.One(Config.Quick, Prop.forAll (Arb.fromGen StorageGenerators.updateGen) property)
+        Check.One(TestConfiguration.QuickConfig, Prop.forAll (Arb.fromGen StorageGenerators.updateGen) property)
 
     [<FsCheck.NUnit.Property(MaxTest = 30, Arbitrary = [| typeof<StorageArbsQuick> |])>]
     [<Category("Slow")>]
@@ -270,7 +271,7 @@ type StoragePropertyTests_Remainder() =
             (lsm.Compact()).GetAwaiter().GetResult()
             let seq = ((lsm :> IStorageBackend<int,int>).GetIterator()).GetAwaiter().GetResult()
             seq |> Seq.forall (fun (_,_,w) -> w <> 0L)
-        Check.One(Config.Quick, Prop.forAll (Arb.fromGen StorageGenerators.updateGen) property)
+        Check.One(TestConfiguration.QuickConfig, Prop.forAll (Arb.fromGen StorageGenerators.updateGen) property)
 
     [<FsCheck.NUnit.Property(Arbitrary = [| typeof<TemporalArbs> |])>]
     member _.``TemporalSpine compaction preserves QueryAtTime results``(updatesByTime: (int64 * (int*int*int64) list) list) =

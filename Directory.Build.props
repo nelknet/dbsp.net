@@ -2,8 +2,14 @@
   <PropertyGroup>
     <!-- Force vstest to use console output mode to avoid logging test stdout as MSBuild warnings. -->
     <VsTestUseMSBuildOutput>false</VsTestUseMSBuildOutput>
-    <!-- Optional: reduce test runner chatter -->
+    <!-- Reduce test runner chatter -->
     <VSTestNoLogo>true</VSTestNoLogo>
     <VSTestVerbosity>minimal</VSTestVerbosity>
+    <!-- Suppress console output from tests -->
+    <ConsoleLoggerParameters>Verbosity=quiet;Summary</ConsoleLoggerParameters>
+    <!-- Disable parallel test execution to avoid output interleaving -->
+    <TestRunnerAdditionalArguments>--logger:"console;verbosity=quiet"</TestRunnerAdditionalArguments>
+    <!-- Suppress FsCheck verbose output globally -->
+    <FsCheckQuietOnSuccess>true</FsCheckQuietOnSuccess>
   </PropertyGroup>
 </Project>

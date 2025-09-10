@@ -32,7 +32,7 @@ type ComplexJoinOperatorTests() =
         let resultList = ZSet.toSeq result |> Seq.sortBy fst |> List.ofSeq
         
         // Debug output
-        printfn "Left outer join result: %A" resultList
+        // printfn "Left outer join result: %A" resultList
         
         Assert.That(resultList.Length, Is.EqualTo 3, sprintf "Expected 3 results but got %d: %A" resultList.Length resultList)
         Assert.That(resultList |> List.exists (fun ((k, v1, v2), _) -> k = 1 && v1 = "a" && v2 = Some 1.0), Is.True)

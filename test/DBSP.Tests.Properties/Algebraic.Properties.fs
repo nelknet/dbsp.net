@@ -10,6 +10,7 @@ open FsCheck.NUnit
 open DBSP.Core.ZSet
 open DBSP.Core.Algebra
 open DBSP.Tests.Properties.Generators
+open DBSP.Tests.Properties.TestConfiguration
 /// Arbitrary providers for numeric types available to attributes below
 type NumericArbs =
     static member FiniteFloat() : Arbitrary<float> =

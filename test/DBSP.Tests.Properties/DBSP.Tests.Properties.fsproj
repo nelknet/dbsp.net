@@ -9,6 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="TestConfiguration.fs" />
+    <Compile Include="AssemblySetup.fs" />
     <Compile Include="TestFsCheckAPI.fs" />
     <Compile Include="Generators.fs" />
     <Compile Include="Algebraic.Properties.fs" />
