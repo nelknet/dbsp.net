@@ -10,6 +10,7 @@
     <Compile Include="Collections/OptimizedCollections.fs" />
     <Compile Include="Collections/FastZSet.fs" />
     <Compile Include="ZSet.fs" />
+    <Compile Include="ZSetOptimized.fs" />
     <Compile Include="IndexedZSet.fs" />
     <Compile Include="Stream.fs" />
     <Compile Include="API.fs" />

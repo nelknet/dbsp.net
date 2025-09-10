@@ -13,6 +13,7 @@
     <Compile Include="ComplexJoinOperators.fs" />
     <Compile Include="TemporalOperators.fs" />
     <Compile Include="RecursiveOperators.fs" />
+    <Compile Include="FusedOperators.fs" />
     <Compile Include="API.fs" />
   </ItemGroup>
 
