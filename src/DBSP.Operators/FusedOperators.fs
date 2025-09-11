@@ -192,9 +192,6 @@ type JoinMapOperator<'K, 'V1, 'V2, 'Out when 'K: comparison and 'V1: comparison
                         | None -> ()
                 
                 // Process new right items against existing left (avoiding duplicates)
-                // Build a set of left delta keys to avoid duplicate combinations
-                let leftDeltaKeys = System.Collections.Generic.HashSet<'V1>()
-                for (li, lw) in ZSet.toSeq leftDelta do if lw <> 0 then leftDeltaKeys.Add(li) |> ignore
                 for (rightItem, rightWeight) in ZSet.toSeq rightDelta do
                     if rightWeight <> 0 then
                         let key = joinKeyRight rightItem
@@ -202,7 +199,7 @@ type JoinMapOperator<'K, 'V1, 'V2, 'Out when 'K: comparison and 'V1: comparison
                         | Some leftItems ->
                             for (leftItem, leftWeight) in leftItems do
                                 // Skip items from current delta (already processed)
-                                if not (leftDeltaKeys.Contains(leftItem)) && leftWeight <> 0 then
+                                if (not (ZSet.containsKey leftItem leftDelta)) && leftWeight <> 0 then
                                     let result = mapResult leftItem rightItem
                                     builder.Add(result, leftWeight * rightWeight)
                         | None -> ()

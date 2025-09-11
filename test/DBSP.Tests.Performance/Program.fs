@@ -30,11 +30,13 @@ let main args =
     let resultsDir = Path.Combine("../../benchmark_results", $"{timestamp}_{commitSha}")
     Directory.CreateDirectory(resultsDir) |> ignore
     
-    let config = 
-        DefaultConfig.Instance
-            .AddExporter(JsonExporter.Full)
-            .WithArtifactsPath(resultsDir)
-            .AddJob(Job.InProcess.WithId("InProc"))
+    let quick = String.Equals(Environment.GetEnvironmentVariable("DBSP_QUICK_BENCH"), "1", StringComparison.OrdinalIgnoreCase)
+    let baseConfig = DefaultConfig.Instance.AddExporter(JsonExporter.Full).WithArtifactsPath(resultsDir)
+    let config =
+        if quick then
+            baseConfig.AddJob(Job.InProcess.WithId("QuickInProc").WithWarmupCount(1).WithIterationCount(5))
+        else
+            baseConfig.AddJob(Job.InProcess.WithId("InProc"))
     
     let switcher = BenchmarkSwitcher [|
         // Core data structure benchmarks

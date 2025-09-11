@@ -39,6 +39,8 @@ module Collections =
             mutable Buckets: ZSetBucket<'K>[]
             mutable Count: int
             mutable Mask: int
+            mutable Occupied: System.Collections.Generic.List<int>
+            mutable Tombstones: int
             Comparer: Collections.Generic.IEqualityComparer<'K>
         } with
             member this.IsEmpty = this.Count = 0
@@ -56,7 +58,12 @@ module Collections =
             let comparer : Collections.Generic.IEqualityComparer<'K> =
                 if typeof<'K> = typeof<string> then Unchecked.unbox StringHasher.stringComparer
                 else System.Collections.Generic.EqualityComparer<'K>.Default
-            { Buckets = Array.create actualCapacity ZSetBucket.Empty; Count = 0; Mask = actualCapacity - 1; Comparer = comparer }
+            { Buckets = Array.create actualCapacity ZSetBucket.Empty
+              Count = 0
+              Mask = actualCapacity - 1
+              Occupied = new System.Collections.Generic.List<int>(actualCapacity)
+              Tombstones = 0
+              Comparer = comparer }
 
         [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
         let create<'K when 'K : equality>() = empty<'K> 16
@@ -89,6 +96,7 @@ module Collections =
                 if bucket.Weight = 0 then
                     bucket.HashCode <- Helpers.HashCode.tombstone
                     dict.Count <- dict.Count - 1
+                    dict.Tombstones <- dict.Tombstones + 1
             elif weight <> 0 then
                 // ensure capacity before insertion
                 let load = float dict.Count / float dict.Buckets.Length
@@ -99,6 +107,8 @@ module Collections =
                     dict.Buckets <- Array.create newCap ZSetBucket.Empty
                     dict.Mask <- newCap - 1
                     dict.Count <- 0
+                    dict.Occupied.Clear()
+                    dict.Tombstones <- 0
                     for b in old do
                         if b.IsValid then
                             insertOrUpdate dict b.Key b.Weight
@@ -114,12 +124,14 @@ module Collections =
                     if b.IsEmpty || b.IsTombstone then
                         b.HashCode <- h; b.Key <- k; b.Weight <- w; b.Distance <- d
                         dict.Count <- dict.Count + 1
+                        dict.Occupied.Add(idx)
                         inserted <- true
                     elif b.IsValid && b.HashCode = h && dict.Comparer.Equals(b.Key, k) then
                         b.Weight <- b.Weight + w
                         if b.Weight = 0 then
                             b.HashCode <- Helpers.HashCode.tombstone
                             dict.Count <- dict.Count - 1
+                            dict.Tombstones <- dict.Tombstones + 1
                         inserted <- true
                     elif b.Distance < d then
                         let tmpH, tmpD, tmpK, tmpW = b.HashCode, b.Distance, b.Key, b.Weight
@@ -129,8 +141,22 @@ module Collections =
                     else
                         idx <- (idx + 1) &&& dict.Mask; d <- d + 1uy
 
+        /// Rehash and compact (remove tombstones and rebuild occupied list)
+        let compact<'K when 'K: equality> (dict: FastZSet<'K>) =
+            let old = dict.Buckets
+            let cap = dict.Buckets.Length
+            dict.Buckets <- Array.create cap ZSetBucket.Empty
+            dict.Mask <- cap - 1
+            dict.Count <- 0
+            dict.Occupied.Clear()
+            dict.Tombstones <- 0
+            for b in old do if b.IsValid then insertOrUpdate dict b.Key b.Weight
+
         let ofSeq (pairs: seq<'K * int>) =
-            let dict = empty<'K> 16
+            // If we can pre-count, pre-size for fewer resizes
+            let coll = match pairs with :? System.Collections.Generic.ICollection<_> as c -> Some c.Count | _ -> None
+            let initialCap = match coll with Some n when n > 0 -> max 16 (1 <<< (32 - System.Numerics.BitOperations.LeadingZeroCount(uint32 (n * 2 - 1)))) | _ -> 16
+            let dict = empty<'K> initialCap
             for (key, weight) in pairs do if weight <> 0 then insertOrUpdate dict key weight
             dict
 
@@ -141,15 +167,38 @@ module Collections =
             if bucketIndex >= 0 then dict.Buckets.[bucketIndex].Weight else 0
 
         [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+        let containsKey (dict: FastZSet<'K>) (key: 'K) =
+            let hash = dict.Comparer.GetHashCode(key) &&& Helpers.POSITIVE_INT_MASK
+            let bucketIndex = findBucket dict key hash
+            bucketIndex >= 0 && dict.Buckets.[bucketIndex].IsValid
+
+        [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
         let ofList (pairs: ('K * int) list) = ofSeq pairs
 
         let union (dict1: FastZSet<'K>) (dict2: FastZSet<'K>) =
-            let result = empty<'K> (max dict1.Capacity dict2.Capacity)
-            for bucket in dict1.Buckets do if bucket.IsValid then insertOrUpdate result bucket.Key bucket.Weight
-            for bucket in dict2.Buckets do if bucket.IsValid then insertOrUpdate result bucket.Key bucket.Weight
+            // Pre-size using counts to reduce resizes and iteration cost
+            let estimated = dict1.Count + dict2.Count
+            let initialCap = max 16 (1 <<< (32 - System.Numerics.BitOperations.LeadingZeroCount(uint32 (max 1 (estimated * 2 - 1)))))
+            let result = empty<'K> initialCap
+            // Iterate only occupied buckets using the occupied index list
+            for i = 0 to dict1.Occupied.Count - 1 do
+                let bi = dict1.Occupied.[i]
+                let b = dict1.Buckets.[bi]
+                if b.IsValid then insertOrUpdate result b.Key b.Weight
+            for i = 0 to dict2.Occupied.Count - 1 do
+                let bi = dict2.Occupied.[i]
+                let b = dict2.Buckets.[bi]
+                if b.IsValid then insertOrUpdate result b.Key b.Weight
             result
 
-        let toSeq (dict: FastZSet<'K>) = seq { for bucket in dict.Buckets do if bucket.IsValid then yield (bucket.Key, bucket.Weight) }
+        let toSeq (dict: FastZSet<'K>) =
+            // Iterate over occupied indices only (O(count))
+            seq {
+                for i = 0 to dict.Occupied.Count - 1 do
+                    let bi = dict.Occupied.[i]
+                    let b = dict.Buckets.[bi]
+                    if b.IsValid then yield (b.Key, b.Weight)
+            }
 
 module FZ = Collections.FastZSet
 
@@ -236,6 +285,10 @@ module ZSet =
 
     /// Convert ZSet to sequence of key-weight pairs (excluding zero weights)
     let toSeq (zset: ZSet<'K>) = FZ.toSeq zset.Inner
+
+    /// Check if key exists
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    let containsKey (key: 'K) (zset: ZSet<'K>) = FZ.containsKey zset.Inner key
 
     /// Convenient inline functions using F# 7+ simplified SRTP syntax
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
