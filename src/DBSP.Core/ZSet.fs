@@ -107,6 +107,9 @@ module ZSet =
         builderFn builder
         builder.Build()
 
+    /// Optimized builder entry used by fused operators and benchmarks
+    let buildWith (builderFn: ZSetBuilder<'K> -> unit) = buildZSet builderFn
+
     /// Convert ZSet to sequence of key-weight pairs (excluding zero weights)
     let toSeq (zset: ZSet<'K>) =
         HashMap.toSeq zset.Inner

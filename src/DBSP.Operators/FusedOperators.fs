@@ -4,7 +4,7 @@ module DBSP.Operators.FusedOperators
 open System.Threading.Tasks
 open DBSP.Core
 open DBSP.Core.ZSet
-open DBSP.Core.ZSetOptimized
+// using ZSet.buildWith for efficient construction
 open DBSP.Operators.Interfaces
 open FSharp.Data.Adaptive
 
@@ -22,7 +22,7 @@ type MapFilterOperator<'In, 'Out when 'In: comparison and 'Out: comparison>
         member _.InputPreference = OwnershipPreference.PreferRef
         member _.EvalAsync(input: ZSet<'In>) =
             let result =
-                ZSetOptimized.buildWith (fun builder ->
+                ZSet.buildWith (fun builder ->
                     for (item, weight) in HashMap.toSeq input.Inner do
                         if weight <> 0 then
                             let mapped = mapFn item
@@ -45,7 +45,7 @@ type FilterMapOperator<'In, 'Out when 'In: comparison and 'Out: comparison>
         member _.InputPreference = OwnershipPreference.PreferRef
         member _.EvalAsync(input: ZSet<'In>) =
             let result =
-                ZSetOptimized.buildWith (fun builder ->
+                ZSet.buildWith (fun builder ->
                     for (item, weight) in HashMap.toSeq input.Inner do
                         if weight <> 0 && filterPredicate item then
                             builder.Add(mapFn item, weight)
@@ -83,7 +83,7 @@ type MapGroupByOperator<'In, 'Mid, 'Key, 'Out when 'In: comparison and 'Mid: com
             
             // Build result
             let result =
-                ZSetOptimized.buildWith (fun builder ->
+                ZSet.buildWith (fun builder ->
                     for kv in groups do
                         let key = kv.Key
                         let items = kv.Value
@@ -124,7 +124,7 @@ type FilterGroupByAggregateOperator<'In, 'Key, 'Acc when 'In: comparison and 'Ke
             
             // Build result
             let result =
-                ZSetOptimized.buildWith (fun builder ->
+                ZSet.buildWith (fun builder ->
                     for kv in groups do
                         let key = kv.Key
                         let acc = kv.Value
@@ -178,7 +178,7 @@ type JoinMapOperator<'K, 'V1, 'V2, 'Out when 'K: comparison and 'V1: comparison
                     items.Add((item, weight))
             
             // Compute join with integrated mapping
-            let result = ZSetOptimized.buildWith (fun builder ->
+            let result = ZSet.buildWith (fun builder ->
                 // Process new left items against all right
                 for (leftItem, leftWeight) in HashMap.toSeq leftDelta.Inner do
                     if leftWeight <> 0 then
@@ -240,7 +240,7 @@ type PipelineOperator<'In, 'Out when 'In: comparison and 'Out: comparison>
         member _.InputPreference = OwnershipPreference.PreferRef
         member _.EvalAsync(input: ZSet<'In>) =
             let result =
-                ZSetOptimized.buildWith (fun builder ->
+                ZSet.buildWith (fun builder ->
                     for (item, weight) in HashMap.toSeq input.Inner do
                         if weight <> 0 then
                             let rec applyOps (value: obj) (ops: ('In -> 'Out option) list) =

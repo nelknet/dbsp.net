@@ -52,7 +52,7 @@ type CircuitLargeScaleBenchmarks() =
     member val private projectToAgg: IUnaryOperator<ZSet<int * ((int * int) * string)>, ZSet<(int * string) * int>> =
         MapOperator<ZSet<int * ((int * int) * string)>, ZSet<(int * string) * int>>(
             fun z ->
-                DBSP.Core.ZSetOptimized.ZSetOptimized.buildWith (fun builder ->
+                ZSet.buildWith (fun builder ->
                     for ((pid, ((cid, amount), cls)), weight) in ZSet.toSeq z do
                         if weight <> 0 then builder.Add(((cid, cls), amount), weight)
                 )
