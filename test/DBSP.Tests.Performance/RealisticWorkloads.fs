@@ -259,19 +259,21 @@ type AnalyticsPipelineWorkload() =
         
         // Perform joins (simplified - real DBSP would use indexed Z-sets)
         let joined =
-            allOrdersZSet.Inner
-            |> Seq.choose (fun (KeyValue(order, orderWeight)) ->
+            allOrdersZSet
+            |> ZSet.toSeq
+            |> Seq.choose (fun (order, orderWeight) ->
                 if orderWeight = 0 then None
                 else
                     let customerOpt = 
-                        customerZSet.Inner 
-                        |> Seq.tryFind (fun (KeyValue((cId, _), _)) -> cId = order.CustomerId)
+                        customerZSet
+                        |> ZSet.toSeq
+                        |> Seq.tryFind (fun ((cId, _), _) -> cId = order.CustomerId)
                     let productOpt = 
-                        productZSet.Inner
-                        |> Seq.tryFind (fun (KeyValue((pId, _), _)) -> pId = order.ProductId)
-                    
+                        productZSet
+                        |> ZSet.toSeq
+                        |> Seq.tryFind (fun ((pId, _), _) -> pId = order.ProductId)
                     match customerOpt, productOpt with
-                    | Some (KeyValue((_, customer), _)), Some (KeyValue((_, product), _)) ->
+                    | Some ((_, customer), _), Some ((_, product), _) ->
                         Some ((customer.Country, product.Category), order.Quantity * int order.Price)
                     | _ -> None)
             |> Seq.groupBy fst

@@ -179,9 +179,8 @@ type ZSetParallelProcessingBenchmarks() =
             |> Array.map (fun chunk -> task {
                 return ZSet.buildZSet (fun builder ->
                     for zset in chunk do
-                        FSharp.Data.Adaptive.HashMap.iter (fun key weight ->
+                        for (key, weight) in ZSet.toSeq zset do
                             builder.Add(key, weight)
-                        ) zset.Inner
                 )
             })
             |> Task.WhenAll

@@ -109,7 +109,7 @@ module StructOperators =
         val mutable Index: int
         
         new(zset: ZSet<'K>) = 
-            let items = zset.Inner |> HashMap.toArray
+            let items = zset |> ZSet.toSeq |> Seq.toArray
             { Items = items; Index = -1 }
         
         member this.MoveNext() =

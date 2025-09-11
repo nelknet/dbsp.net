@@ -123,10 +123,9 @@ type ZSetBatchProcessor<'K when 'K : comparison>(config: BatchConfig) =
         let result = ZSet.buildZSet (fun builder ->
             for operation in operations do
                 // Apply operation and add results to builder
-                let result = operation ZSet.empty // Placeholder
-                result.Inner |> HashMap.iter (fun key weight ->
+                let result = operation (ZSet.empty<'K>)
+                for (key, weight) in ZSet.toSeq result do
                     builder.Add(key, weight)
-                )
         )
         () // Return unit since this is a private method
 
