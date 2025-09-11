@@ -10,6 +10,8 @@ open DBSP.Operators.Interfaces
 /// Map operator - applies a transformation function to each element
 type MapOperator<'I, 'O>([<InlineIfLambda>] transform: 'I -> 'O, ?name: string) =
     inherit BaseUnaryOperator<'I, 'O>(defaultArg name "Map")
+    /// Expose transform function for optimizer fusion
+    member _.Transform = transform
     
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     override _.EvalAsyncImpl(input: 'I) = task {
@@ -23,6 +25,8 @@ type MapOperator<'I, 'O>([<InlineIfLambda>] transform: 'I -> 'O, ?name: string) 
 /// Map operator specifically for Z-sets - transforms keys while preserving weights
 type ZSetMapOperator<'K1, 'K2 when 'K1: comparison and 'K2: comparison>([<InlineIfLambda>] transform: 'K1 -> 'K2, ?name: string) =
     inherit BaseUnaryOperator<ZSet<'K1>, ZSet<'K2>>(defaultArg name "ZSetMap")
+    /// Expose transform function for optimizer fusion
+    member _.Transform = transform
     
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     override _.EvalAsyncImpl(input: ZSet<'K1>) = task {
@@ -46,6 +50,8 @@ type FilterOperator<'T>([<InlineIfLambda>] predicate: 'T -> bool, ?name: string)
 /// Filter operator specifically for Z-sets - filters keys while preserving structure
 type ZSetFilterOperator<'K when 'K: comparison>([<InlineIfLambda>] predicate: 'K -> bool, ?name: string) =
     inherit BaseUnaryOperator<ZSet<'K>, ZSet<'K>>(defaultArg name "ZSetFilter")
+    /// Expose predicate for optimizer fusion
+    member _.Predicate = predicate
     
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     override _.EvalAsyncImpl(input: ZSet<'K>) = task {

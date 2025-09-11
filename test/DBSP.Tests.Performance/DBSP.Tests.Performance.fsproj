@@ -14,9 +14,12 @@
     <Compile Include="OptimizationValidation.fs" />
     <Compile Include="ParallelExecutionBenchmarks.fs" />
     <Compile Include="OperatorBenchmarks.fs" />
+    <Compile Include="JoinProjectionBenchmarks.fs" />
     <Compile Include="CircuitBenchmarks.fs" />
     <Compile Include="StorageBenchmarks.fs" />
     <Compile Include="SimpleProfilingBenchmarks.fs" />
+    <Compile Include="CircuitLargeScaleBenchmarks.fs" />
+    <Compile Include="LargeScalePipelineBenchmarks.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

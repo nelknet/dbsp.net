@@ -20,15 +20,16 @@ type MapFilterOperator<'In, 'Out when 'In: comparison and 'Out: comparison>
         member _.Flush() = ()
         member _.ClearState() = ()
         member _.InputPreference = OwnershipPreference.PreferRef
-        member _.EvalAsync(input: ZSet<'In>) = task {
-            return ZSetOptimized.buildWith (fun builder ->
-                for (item, weight) in HashMap.toSeq input.Inner do
-                    if weight <> 0 then
-                        let mapped = mapFn item
-                        if filterPredicate mapped then
-                            builder.Add(mapped, weight)
-            )
-        }
+        member _.EvalAsync(input: ZSet<'In>) =
+            let result =
+                ZSetOptimized.buildWith (fun builder ->
+                    for (item, weight) in HashMap.toSeq input.Inner do
+                        if weight <> 0 then
+                            let mapped = mapFn item
+                            if filterPredicate mapped then
+                                builder.Add(mapped, weight)
+                )
+            Task.FromResult(result)
 
 /// Fused Filter-Map operator (filter first for efficiency)
 type FilterMapOperator<'In, 'Out when 'In: comparison and 'Out: comparison>
@@ -42,13 +43,14 @@ type FilterMapOperator<'In, 'Out when 'In: comparison and 'Out: comparison>
         member _.Flush() = ()
         member _.ClearState() = ()
         member _.InputPreference = OwnershipPreference.PreferRef
-        member _.EvalAsync(input: ZSet<'In>) = task {
-            return ZSetOptimized.buildWith (fun builder ->
-                for (item, weight) in HashMap.toSeq input.Inner do
-                    if weight <> 0 && filterPredicate item then
-                        builder.Add(mapFn item, weight)
-            )
-        }
+        member _.EvalAsync(input: ZSet<'In>) =
+            let result =
+                ZSetOptimized.buildWith (fun builder ->
+                    for (item, weight) in HashMap.toSeq input.Inner do
+                        if weight <> 0 && filterPredicate item then
+                            builder.Add(mapFn item, weight)
+                )
+            Task.FromResult(result)
 
 /// Fused Map-GroupBy operator for efficient aggregation pipelines
 type MapGroupByOperator<'In, 'Mid, 'Key, 'Out when 'In: comparison and 'Mid: comparison 
@@ -63,7 +65,7 @@ type MapGroupByOperator<'In, 'Mid, 'Key, 'Out when 'In: comparison and 'Mid: com
         member _.Flush() = ()
         member _.ClearState() = ()
         member _.InputPreference = OwnershipPreference.PreferRef
-        member _.EvalAsync(input: ZSet<'In>) = task {
+        member _.EvalAsync(input: ZSet<'In>) =
             // Single pass: map and group simultaneously
             let groups = System.Collections.Generic.Dictionary<'Key, ResizeArray<'Mid * int>>()
             
@@ -80,14 +82,15 @@ type MapGroupByOperator<'In, 'Mid, 'Key, 'Out when 'In: comparison and 'Mid: com
                         groups.[key] <- group
             
             // Build result
-            return ZSetOptimized.buildWith (fun builder ->
-                for kv in groups do
-                    let key = kv.Key
-                    let items = kv.Value
-                    let aggregated = aggregateFn items
-                    builder.Add((key, aggregated), 1)
-            )
-        }
+            let result =
+                ZSetOptimized.buildWith (fun builder ->
+                    for kv in groups do
+                        let key = kv.Key
+                        let items = kv.Value
+                        let aggregated = aggregateFn items
+                        builder.Add((key, aggregated), 1)
+                )
+            Task.FromResult(result)
 
 /// Fused Filter-GroupBy-Aggregate operator
 type FilterGroupByAggregateOperator<'In, 'Key, 'Acc when 'In: comparison and 'Key: comparison and 'Acc: comparison>
@@ -104,7 +107,7 @@ type FilterGroupByAggregateOperator<'In, 'Key, 'Acc when 'In: comparison and 'Ke
         member _.Flush() = ()
         member _.ClearState() = ()
         member _.InputPreference = OwnershipPreference.PreferRef
-        member _.EvalAsync(input: ZSet<'In>) = task {
+        member _.EvalAsync(input: ZSet<'In>) =
             let groups = System.Collections.Generic.Dictionary<'Key, 'Acc>()
             
             // Single pass: filter, group, and aggregate
@@ -120,13 +123,14 @@ type FilterGroupByAggregateOperator<'In, 'Key, 'Acc when 'In: comparison and 'Ke
                     groups.[key] <- folder acc item weight
             
             // Build result
-            return ZSetOptimized.buildWith (fun builder ->
-                for kv in groups do
-                    let key = kv.Key
-                    let acc = kv.Value
-                    builder.Add((key, acc), 1)
-            )
-        }
+            let result =
+                ZSetOptimized.buildWith (fun builder ->
+                    for kv in groups do
+                        let key = kv.Key
+                        let acc = kv.Value
+                        builder.Add((key, acc), 1)
+                )
+            Task.FromResult(result)
 
 /// Fused Join-Map operator for efficient join pipelines
 type JoinMapOperator<'K, 'V1, 'V2, 'Out when 'K: comparison and 'V1: comparison 
@@ -146,7 +150,7 @@ type JoinMapOperator<'K, 'V1, 'V2, 'Out when 'K: comparison and 'V1: comparison
         member _.Flush() = ()
         member _.ClearState() = ()
         member _.InputPreferences = (OwnershipPreference.PreferRef, OwnershipPreference.PreferRef)
-        member _.EvalAsync(leftDelta: ZSet<'V1>) (rightDelta: ZSet<'V2>) = task {
+        member _.EvalAsync(leftDelta: ZSet<'V1>) (rightDelta: ZSet<'V2>) =
             // Update left state
             for (item, weight) in HashMap.toSeq leftDelta.Inner do
                 if weight <> 0 then
@@ -174,7 +178,7 @@ type JoinMapOperator<'K, 'V1, 'V2, 'Out when 'K: comparison and 'V1: comparison
                     items.Add((item, weight))
             
             // Compute join with integrated mapping
-            return ZSetOptimized.buildWith (fun builder ->
+            let result = ZSetOptimized.buildWith (fun builder ->
                 // Process new left items against all right
                 for (leftItem, leftWeight) in HashMap.toSeq leftDelta.Inner do
                     if leftWeight <> 0 then
@@ -200,7 +204,27 @@ type JoinMapOperator<'K, 'V1, 'V2, 'Out when 'K: comparison and 'V1: comparison
                                     builder.Add(result, leftWeight * rightWeight)
                         | None -> ()
             )
-        }
+            Task.FromResult(result)
+
+/// Named fused Join-Project operator (thin wrapper over JoinMap)
+type JoinProjectOperator<'K, 'V1, 'V2, 'Out when 'K: comparison and 'V1: comparison 
+                                            and 'V2: comparison and 'Out: comparison>
+    (joinKeyLeft: 'V1 -> 'K,
+     joinKeyRight: 'V2 -> 'K,
+     project: 'V1 -> 'V2 -> 'Out) =
+    
+    let inner = JoinMapOperator<'K,'V1,'V2,'Out>(joinKeyLeft, joinKeyRight, project)
+    
+    interface IBinaryOperator<ZSet<'V1>, ZSet<'V2>, ZSet<'Out>> with
+        member _.Name = "JoinProject"
+        member _.IsAsync = false
+        member _.Ready = true
+        member _.Fixedpoint(_) = true
+        member _.Flush() = ()
+        member _.ClearState() = ()
+        member _.InputPreferences = (OwnershipPreference.PreferRef, OwnershipPreference.PreferRef)
+        member _.EvalAsync(leftDelta: ZSet<'V1>) (rightDelta: ZSet<'V2>) =
+            (inner :> IBinaryOperator<ZSet<'V1>, ZSet<'V2>, ZSet<'Out>>).EvalAsync(leftDelta)(rightDelta)
 
 /// Fused pipeline operator that chains multiple operations
 type PipelineOperator<'In, 'Out when 'In: comparison and 'Out: comparison>
@@ -214,29 +238,30 @@ type PipelineOperator<'In, 'Out when 'In: comparison and 'Out: comparison>
         member _.Flush() = ()
         member _.ClearState() = ()
         member _.InputPreference = OwnershipPreference.PreferRef
-        member _.EvalAsync(input: ZSet<'In>) = task {
-            return ZSetOptimized.buildWith (fun builder ->
-                for (item, weight) in HashMap.toSeq input.Inner do
-                    if weight <> 0 then
-                        let rec applyOps (value: obj) (ops: ('In -> 'Out option) list) =
-                            match ops with
-                            | [] -> 
-                                match value with
-                                | :? 'Out as result -> Some result
-                                | _ -> None
-                            | op :: rest ->
-                                match value with
-                                | :? 'In as input ->
-                                    match op input with
-                                    | Some output -> applyOps (box output) rest
-                                    | None -> None
-                                | _ -> None
-                        
-                        match applyOps (box item) operations with
-                        | Some result -> builder.Add(result, weight)
-                        | None -> ()
-            )
-        }
+        member _.EvalAsync(input: ZSet<'In>) =
+            let result =
+                ZSetOptimized.buildWith (fun builder ->
+                    for (item, weight) in HashMap.toSeq input.Inner do
+                        if weight <> 0 then
+                            let rec applyOps (value: obj) (ops: ('In -> 'Out option) list) =
+                                match ops with
+                                | [] -> 
+                                    match value with
+                                    | :? 'Out as result -> Some result
+                                    | _ -> None
+                                | op :: rest ->
+                                    match value with
+                                    | :? 'In as input ->
+                                        match op input with
+                                        | Some output -> applyOps (box output) rest
+                                        | None -> None
+                                    | _ -> None
+                            
+                            match applyOps (box item) operations with
+                            | Some result -> builder.Add(result, weight)
+                            | None -> ()
+                )
+            Task.FromResult(result)
 
 /// Module for creating and composing fused operators
 module FusedOperators =

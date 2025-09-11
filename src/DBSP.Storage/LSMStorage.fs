@@ -79,98 +79,92 @@ type LSMStorageBackend<'K, 'V when 'K : comparison and 'V : comparison>
 
     interface IStorageBackend<'K, 'V> with
         member _.StoreBatch(updates: ('K * 'V * int64) seq) =
-            task {
-                for (k, v, w) in updates do
-                    let kv = { K = k; V = v }
-                    let mutable existing = 0L
-                    let mutable keyCopy = kv
-                    if w = 0L then
-                        // Zero-weight update is a no-op (do not delete existing state)
-                        ()
-                    else
-                        if zoneTree.TryGet(&keyCopy, &existing) then
-                            let newW = existing + w
-                            if newW = 0L then
-                                let mutable _op = 0L
-                                zoneTree.TryDelete(&keyCopy, & _op) |> ignore
-                            else
-                                zoneTree.Upsert(&keyCopy, &newW) |> ignore
+            // Synchronous implementation; wrap with Task.FromResult to avoid FS3511
+            for (k, v, w) in updates do
+                let kv = { K = k; V = v }
+                let mutable existing = 0L
+                let mutable keyCopy = kv
+                if w = 0L then
+                    () // Zero-weight update is a no-op
+                else
+                    if zoneTree.TryGet(&keyCopy, &existing) then
+                        let newW = existing + w
+                        if newW = 0L then
+                            let mutable _op = 0L
+                            zoneTree.TryDelete(&keyCopy, & _op) |> ignore
                         else
-                            zoneTree.Upsert(&keyCopy, &w) |> ignore
-                    stats <- { stats with BytesWritten = stats.BytesWritten + 16L }
-                stats <- { stats with KeysStored = int64 (zoneTree.Count()) }
-            }
+                            zoneTree.Upsert(&keyCopy, &newW) |> ignore
+                    else
+                        zoneTree.Upsert(&keyCopy, &w) |> ignore
+                stats <- { stats with BytesWritten = stats.BytesWritten + 16L }
+            stats <- { stats with KeysStored = int64 (zoneTree.Count()) }
+            Task.FromResult(())
 
         member _.Get(k: 'K) =
-            task {
-                // Generic and correct: scan forward until we reach k
-                use it = zoneTree.CreateIterator()
-                stats <- { stats with BytesRead = stats.BytesRead + 16L }
-                let mutable res : ('V * int64) option = None
-                while it.Next() && res.IsNone do
-                    let ck = it.CurrentKey
-                    if ck.K = k then res <- Some (ck.V, it.CurrentValue)
-                    elif ck.K > k then res <- None
-                return res
-            }
+            // Generic and correct: scan forward until we reach k
+            use it = zoneTree.CreateIterator()
+            stats <- { stats with BytesRead = stats.BytesRead + 16L }
+            let mutable res : ('V * int64) option = None
+            while it.Next() && res.IsNone do
+                let ck = it.CurrentKey
+                if ck.K = k then res <- Some (ck.V, it.CurrentValue)
+                elif ck.K > k then res <- None
+            Task.FromResult(res)
 
         member _.GetIterator() =
-            task {
-                let it = zoneTree.CreateIterator()
-                let seq = seq {
-                    while it.Next() do
-                        let k = it.CurrentKey
-                        let w = it.CurrentValue
-                        if w <> 0L then yield (k.K, k.V, w)
-                    it.Dispose()
-                }
-                return seq
+            let it = zoneTree.CreateIterator()
+            let seq = seq {
+                while it.Next() do
+                    let k = it.CurrentKey
+                    let w = it.CurrentValue
+                    if w <> 0L then yield (k.K, k.V, w)
+                it.Dispose()
             }
+            Task.FromResult(seq)
 
         member _.GetRangeIterator (startKey: 'K option) (endKey: 'K option) =
-            task {
-                let it = zoneTree.CreateIterator()
-                let startOk = it.Next()
-                let seq = seq {
-                    if startOk then
-                        let mutable cont = true
-                        while cont do
-                            let ck = it.CurrentKey
-                            let afterStart =
-                                match startKey with
-                                | Some s -> ck.K >= s
-                                | None -> true
-                            let beforeEnd =
-                                match endKey with
-                                | Some e -> ck.K <= e
-                                | None -> true
-                            if afterStart && beforeEnd then
-                                let w = it.CurrentValue
-                                if w <> 0L then yield (ck.K, ck.V, w)
-                                cont <- it.Next()
-                            else if ck.K > (defaultArg endKey ck.K) then
-                                cont <- false
-                            else
-                                cont <- it.Next()
-                    it.Dispose()
-                }
-                return seq
+            let it = zoneTree.CreateIterator()
+            let startOk = it.Next()
+            let seq = seq {
+                if startOk then
+                    let mutable cont = true
+                    while cont do
+                        let ck = it.CurrentKey
+                        let afterStart =
+                            match startKey with
+                            | Some s -> ck.K >= s
+                            | None -> true
+                        let beforeEnd =
+                            match endKey with
+                            | Some e -> ck.K <= e
+                            | None -> true
+                        if afterStart && beforeEnd then
+                            let w = it.CurrentValue
+                            if w <> 0L then yield (ck.K, ck.V, w)
+                            cont <- it.Next()
+                        else if ck.K > (defaultArg endKey ck.K) then
+                            cont <- false
+                        else
+                            cont <- it.Next()
+                it.Dispose()
             }
+            Task.FromResult(seq)
 
         member _.Compact() =
-            task {
-                // Force memtable forward then merge until no in-memory records remain
-                let m = zoneTree.Maintenance
-                let mutable remaining = m.InMemoryRecordCount
-                while remaining > 0L do
-                    m.MoveMutableSegmentForward()
-                    m.StartMergeOperation().Join() |> ignore
-                    remaining <- m.InMemoryRecordCount
-                stats <- { stats with CompactionCount = stats.CompactionCount + 1; LastCompactionTime = Some DateTime.UtcNow }
-            }
+            // Force memtable forward then merge until no in-memory records remain
+            let m = zoneTree.Maintenance
+            let mutable remaining = m.InMemoryRecordCount
+            while remaining > 0L do
+                m.MoveMutableSegmentForward()
+                m.StartMergeOperation().Join() |> ignore
+                remaining <- m.InMemoryRecordCount
+            stats <- { stats with CompactionCount = stats.CompactionCount + 1; LastCompactionTime = Some DateTime.UtcNow }
+            Task.FromResult(())
 
-        member _.GetStats() = task { return stats }
-        member _.Dispose() = task { zoneTree.Dispose() }
+        member _.GetStats() = Task.FromResult(stats)
+        member _.Dispose() =
+            zoneTree.Dispose()
+            Task.FromResult(())
 
     // C#-friendly overloads
     member this.StoreBatch(updates: struct ('K * 'V * int64) array) =

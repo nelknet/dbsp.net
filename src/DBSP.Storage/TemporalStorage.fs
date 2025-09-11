@@ -10,14 +10,13 @@ type TemporalSpine<'K, 'V when 'K : comparison and 'V : equality>(config: Storag
     let mutable frontier = 0L
     let snapshots = SortedDictionary<int64, ResizeArray<'K * 'V * int64>>()
 
-    member _.InsertBatch(time: int64, updates: struct ('K * 'V * int64) array) = task {
+    member _.InsertBatch(time: int64, updates: struct ('K * 'V * int64) array) =
         if not (snapshots.ContainsKey(time)) then snapshots[time] <- ResizeArray()
         snapshots[time].AddRange(updates |> Seq.map (fun struct (k,v,w) -> (k,v,w)))
-        return ()
-    }
+        Task.FromResult(())
 
 
-    member _.QueryAtTime(time: int64) = task {
+    member _.QueryAtTime(time: int64) =
         let acc = Dictionary<'K * 'V, int64>()
         for kv in snapshots do
             if kv.Key <= time then
@@ -30,21 +29,19 @@ type TemporalSpine<'K, 'V when 'K : comparison and 'V : equality>(config: Storag
             acc
             |> Seq.choose (fun (KeyValue((k,v),w)) -> if w = 0L then None else Some (struct (k,v,w)))
             |> Seq.toArray
-        return res
-    }
+        Task.FromResult(res)
 
 
-    member _.QueryTimeRange(startTime: int64, endTime: int64) = task {
+    member _.QueryTimeRange(startTime: int64, endTime: int64) =
         let res =
             snapshots
             |> Seq.filter (fun kv -> kv.Key >= startTime && kv.Key <= endTime)
             |> Seq.map (fun kv -> struct (kv.Key, kv.Value |> Seq.map (fun (k,v,w) -> struct (k,v,w)) |> Seq.toArray))
             |> Seq.toArray
-        return res
-    }
+        Task.FromResult(res)
 
 
-    member _.Compact(beforeTime: int64) = task {
+    member _.Compact(beforeTime: int64) =
         // Leveled compaction: within-bucket merge for all times < beforeTime.
         // This eliminates duplicate keys within the same time and removes zero-weight pairs,
         // while preserving per-time queryability.
@@ -64,10 +61,8 @@ type TemporalSpine<'K, 'V when 'K : comparison and 'V : equality>(config: Storag
                     let (k,v) = kv.Key
                     merged.Add(k, v, kv.Value)
             snapshots[t] <- merged
-        return ()
-    }
+        Task.FromResult(())
 
-    member _.AdvanceFrontier(newFrontier: int64) = task {
+    member _.AdvanceFrontier(newFrontier: int64) =
         frontier <- max frontier newFrontier
-        return ()
-    }
+        Task.FromResult(())

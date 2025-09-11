@@ -75,57 +75,54 @@ type InMemoryStorageBackend<'K, 'V when 'K : comparison>(config: StorageConfig) 
     
     interface IStorageBackend<'K, 'V> with
         member _.StoreBatch(updates: ('K * 'V * int64) seq) =
-            task {
-                for (key, value, weight) in updates do
-                    storage <-
-                        match HashMap.tryFind key storage with
-                        | Some (_, existingWeight) ->
-                            let newWeight = existingWeight + weight
-                            if newWeight = 0L then HashMap.remove key storage
-                            else HashMap.add key (value, newWeight) storage
-                        | None ->
-                            if weight <> 0L then
-                                HashMap.add key (value, weight) storage
-                            else
-                                storage
-                                
-                stats <- 
-                    { stats with 
-                        BytesWritten = stats.BytesWritten + 100L // Simplified
-                        KeysStored = int64 (HashMap.count storage) }
-            }
+            // Synchronous implementation; return completed task to avoid FS3511 warnings
+            for (key, value, weight) in updates do
+                storage <-
+                    match HashMap.tryFind key storage with
+                    | Some (_, existingWeight) ->
+                        let newWeight = existingWeight + weight
+                        if newWeight = 0L then HashMap.remove key storage
+                        else HashMap.add key (value, newWeight) storage
+                    | None ->
+                        if weight <> 0L then
+                            HashMap.add key (value, weight) storage
+                        else
+                            storage
+            stats <- 
+                { stats with 
+                    BytesWritten = stats.BytesWritten + 100L // Simplified
+                    KeysStored = int64 (HashMap.count storage) }
+            Task.FromResult(())
             
         member _.Get(key: 'K) =
-            task {
-                return HashMap.tryFind key storage
-            }
+            // Pure lookup; return cached value via Task.FromResult
+            Task.FromResult(HashMap.tryFind key storage)
             
         member _.GetIterator() =
-            task {
-                return 
-                    storage 
-                    |> HashMap.toSeq
-                    |> Seq.map (fun (k, (v, w)) -> (k, v, w))
-            }
+            // Wrap synchronous iterator in Task
+            Task.FromResult(
+                storage 
+                |> HashMap.toSeq
+                |> Seq.map (fun (k, (v, w)) -> (k, v, w))
+            )
             
         member _.GetRangeIterator (startKey: 'K option) (endKey: 'K option) =
-            task {
-                let filtered = 
-                    storage 
-                    |> HashMap.toSeq
-                    |> Seq.filter (fun (k, _) ->
-                        let afterStart = 
-                            match startKey with
-                            | Some s -> k >= s
-                            | None -> true
-                        let beforeEnd =
-                            match endKey with
-                            | Some e -> k <= e
-                            | None -> true
-                        afterStart && beforeEnd)
-                    |> Seq.map (fun (k, (v, w)) -> (k, v, w))
-                return filtered
-            }
+            // Filter keys synchronously and wrap in Task
+            let filtered = 
+                storage 
+                |> HashMap.toSeq
+                |> Seq.filter (fun (k, _) ->
+                    let afterStart = 
+                        match startKey with
+                        | Some s -> k >= s
+                        | None -> true
+                    let beforeEnd =
+                        match endKey with
+                        | Some e -> k <= e
+                        | None -> true
+                    afterStart && beforeEnd)
+                |> Seq.map (fun (k, (v, w)) -> (k, v, w))
+            Task.FromResult(filtered)
             
         member _.Compact() =
             task {

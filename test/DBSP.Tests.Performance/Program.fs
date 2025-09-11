@@ -7,6 +7,7 @@ open BenchmarkDotNet.Running
 open BenchmarkDotNet.Configs
 open BenchmarkDotNet.Exporters
 open BenchmarkDotNet.Exporters.Json
+open BenchmarkDotNet.Jobs
 
 [<EntryPoint>]
 let main args =
@@ -33,6 +34,7 @@ let main args =
         DefaultConfig.Instance
             .AddExporter(JsonExporter.Full)
             .WithArtifactsPath(resultsDir)
+            .AddJob(Job.InProcess.WithId("InProc"))
     
     let switcher = BenchmarkSwitcher [|
         // Core data structure benchmarks
@@ -54,12 +56,19 @@ let main args =
         typeof<OperatorBenchmarks.AggregationOperatorBenchmarks>
         typeof<OperatorBenchmarks.JoinOperatorBenchmarks>
         typeof<OperatorBenchmarks.AsyncOverheadBenchmarks>
+        // Join projection fusion microbenchmarks
+        typeof<JoinProjectionBenchmarks>
         // Storage engine benchmarks
         typeof<DBSP.Tests.Performance.StorageBenchmarks>
         
         // Phase 6 Profiling benchmarks
         typeof<SimpleProfilingBenchmarks.CoreBottleneckBenchmarks>
         typeof<SimpleProfilingBenchmarks.AllocationAnalysis>
+        
+        // Large-scale scenario benchmarks
+        typeof<LargeScalePipelineBenchmarks>
+        // Circuit-driven large-scale incremental pipeline benchmark
+        typeof<CircuitLargeScaleBenchmarks>
     |]
     
     let summary = switcher.Run(args, config)
