@@ -200,6 +200,36 @@ module Collections =
                     if b.IsValid then yield (b.Key, b.Weight)
             }
 
+        // Struct enumerator to avoid iterator allocations in hot loops
+        [<Struct>]
+        type Enumerator<'K when 'K : equality> =
+            val mutable private Snapshot : int[]
+            val mutable private Index : int
+            val mutable private Dict : FastZSet<'K>
+            val mutable private Curr : 'K * int
+            new(dict: FastZSet<'K>) = { Snapshot = dict.Occupied.ToArray(); Index = -1; Dict = dict; Curr = Unchecked.defaultof<_> }
+            member this.MoveNext() =
+                let mutable i = this.Index
+                let mutable found = false
+                while (not found) && (i + 1 < this.Snapshot.Length) do
+                    i <- i + 1
+                    let bi = this.Snapshot.[i]
+                    let b = this.Dict.Buckets.[bi]
+                    if b.IsValid then
+                        this.Curr <- (b.Key, b.Weight)
+                        found <- true
+                this.Index <- i
+                found
+            member this.Current = this.Curr
+
+        let inline iter (f: 'K -> int -> unit) (dict: FastZSet<'K>) =
+            let mutable e = Enumerator<'K>(dict)
+            let mutable cont = e.MoveNext()
+            while cont do
+                let (k,w) = e.Current
+                f k w
+                cont <- e.MoveNext()
+
 module FZ = Collections.FastZSet
 
 /// Z-set type backed by FastZSet storage (equality-constrained keys)
@@ -285,6 +315,10 @@ module ZSet =
 
     /// Convert ZSet to sequence of key-weight pairs (excluding zero weights)
     let toSeq (zset: ZSet<'K>) = FZ.toSeq zset.Inner
+
+    /// Iterate without allocations using struct enumerator
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    let iter (f: 'K -> int -> unit) (zset: ZSet<'K>) = FZ.iter f zset.Inner
 
     /// Check if key exists
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]

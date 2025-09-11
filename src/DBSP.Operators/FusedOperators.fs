@@ -23,11 +23,11 @@ type MapFilterOperator<'In, 'Out when 'In: comparison and 'Out: comparison>
         member _.EvalAsync(input: ZSet<'In>) =
             let result =
                 ZSet.buildWith (fun builder ->
-                    for (item, weight) in ZSet.toSeq input do
-                        if weight <> 0 then
-                            let mapped = mapFn item
-                            if filterPredicate mapped then
-                                builder.Add(mapped, weight)
+                    ZSet.iter (fun item weight ->
+                        let mapped = mapFn item
+                        if filterPredicate mapped then
+                            builder.Add(mapped, weight)
+                    ) input
                 )
             Task.FromResult(result)
 
@@ -46,9 +46,10 @@ type FilterMapOperator<'In, 'Out when 'In: comparison and 'Out: comparison>
         member _.EvalAsync(input: ZSet<'In>) =
             let result =
                 ZSet.buildWith (fun builder ->
-                    for (item, weight) in ZSet.toSeq input do
+                    ZSet.iter (fun item weight ->
                         if weight <> 0 && filterPredicate item then
                             builder.Add(mapFn item, weight)
+                    ) input
                 )
             Task.FromResult(result)
 
@@ -69,7 +70,7 @@ type MapGroupByOperator<'In, 'Mid, 'Key, 'Out when 'In: comparison and 'Mid: com
             // Single pass: map and group simultaneously
             let groups = System.Collections.Generic.Dictionary<'Key, ResizeArray<'Mid * int>>()
             
-            for (item, weight) in ZSet.toSeq input do
+            ZSet.iter (fun item weight ->
                 if weight <> 0 then
                     let mapped = mapFn item
                     let key = keyFn mapped
@@ -80,6 +81,7 @@ type MapGroupByOperator<'In, 'Mid, 'Key, 'Out when 'In: comparison and 'Mid: com
                         let group = ResizeArray<_>()
                         group.Add((mapped, weight))
                         groups.[key] <- group
+            ) input
             
             // Build result
             let result =
@@ -111,7 +113,7 @@ type FilterGroupByAggregateOperator<'In, 'Key, 'Acc when 'In: comparison and 'Ke
             let groups = System.Collections.Generic.Dictionary<'Key, 'Acc>()
             
             // Single pass: filter, group, and aggregate
-            for (item, weight) in ZSet.toSeq input do
+            ZSet.iter (fun item weight ->
                 if weight <> 0 && filterPredicate item then
                     let key = keyFn item
                     
@@ -121,6 +123,7 @@ type FilterGroupByAggregateOperator<'In, 'Key, 'Acc when 'In: comparison and 'Ke
                         | false, _ -> seed
                     
                     groups.[key] <- folder acc item weight
+            ) input
             
             // Build result
             let result =
@@ -152,7 +155,7 @@ type JoinMapOperator<'K, 'V1, 'V2, 'Out when 'K: comparison and 'V1: comparison
         member _.InputPreferences = (OwnershipPreference.PreferRef, OwnershipPreference.PreferRef)
         member _.EvalAsync(leftDelta: ZSet<'V1>) (rightDelta: ZSet<'V2>) =
             // Update left state
-            for (item, weight) in ZSet.toSeq leftDelta do
+            ZSet.iter (fun item weight ->
                 if weight <> 0 then
                     let key = joinKeyLeft item
                     let items = 
@@ -163,9 +166,10 @@ type JoinMapOperator<'K, 'V1, 'V2, 'Out when 'K: comparison and 'V1: comparison
                             leftState <- FSharp.Data.Adaptive.HashMap.add key list leftState
                             list
                     items.Add((item, weight))
+            ) leftDelta
             
             // Update right state
-            for (item, weight) in ZSet.toSeq rightDelta do
+            ZSet.iter (fun item weight ->
                 if weight <> 0 then
                     let key = joinKeyRight item
                     let items = 
@@ -176,11 +180,12 @@ type JoinMapOperator<'K, 'V1, 'V2, 'Out when 'K: comparison and 'V1: comparison
                             rightState <- FSharp.Data.Adaptive.HashMap.add key list rightState
                             list
                     items.Add((item, weight))
+            ) rightDelta
             
             // Compute join with integrated mapping
             let result = ZSet.buildWith (fun builder ->
                 // Process new left items against all right
-                for (leftItem, leftWeight) in ZSet.toSeq leftDelta do
+                ZSet.iter (fun leftItem leftWeight ->
                     if leftWeight <> 0 then
                         let key = joinKeyLeft leftItem
                         match FSharp.Data.Adaptive.HashMap.tryFind key rightState with
@@ -190,9 +195,10 @@ type JoinMapOperator<'K, 'V1, 'V2, 'Out when 'K: comparison and 'V1: comparison
                                     let result = mapResult leftItem rightItem
                                     builder.Add(result, leftWeight * rightWeight)
                         | None -> ()
+                ) leftDelta
                 
                 // Process new right items against existing left (avoiding duplicates)
-                for (rightItem, rightWeight) in ZSet.toSeq rightDelta do
+                ZSet.iter (fun rightItem rightWeight ->
                     if rightWeight <> 0 then
                         let key = joinKeyRight rightItem
                         match FSharp.Data.Adaptive.HashMap.tryFind key leftState with
@@ -203,6 +209,7 @@ type JoinMapOperator<'K, 'V1, 'V2, 'Out when 'K: comparison and 'V1: comparison
                                     let result = mapResult leftItem rightItem
                                     builder.Add(result, leftWeight * rightWeight)
                         | None -> ()
+                ) rightDelta
             )
             Task.FromResult(result)
 
