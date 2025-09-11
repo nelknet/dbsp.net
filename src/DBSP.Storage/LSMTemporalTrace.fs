@@ -61,20 +61,10 @@ type LSMTemporalTrace<'K,'V when 'K : comparison and 'V : comparison>
             .SetDiskSegmentMaxItemCount(config.CompactionThreshold)
             .OpenOrCreate()
 
-    /// Try to seek iterator to the first key at or after a given start time using reflection
-    /// to call ZoneTree's seek method if available. Falls back to linear advance.
-    let trySeekToStartTime (it: obj) (startTime: int64) : unit =
-        // Only attempt when K and V are value types to safely construct minimal sentinels.
-        if typeof<'K>.IsValueType && typeof<'V>.IsValueType then
-            try
-                let t = it.GetType()
-                let m = t.GetMethod("Seek")
-                if not (isNull m) then
-                    // Build the lower-bound key (startTime, default K, default V)
-                    let mutable lb = { T = startTime; K = Unchecked.defaultof<'K>; V = Unchecked.defaultof<'V> }
-                    m.Invoke(it, [| box lb |]) |> ignore
-            with _ -> ()
-        else ()
+    // No reflection: assume ZoneTree iterator exposes Seek(byref key) for lower-bound positioning.
+    let seekToStart (it: IZoneTreeIterator<TKV<'K,'V>, int64>) (startTime: int64) =
+        let mutable lb = { T = startTime; K = Unchecked.defaultof<'K>; V = Unchecked.defaultof<'V> }
+        it.Seek(&lb)
 
     /// Insert a batch of updates at a logical time. Coalesces within-batch duplicates.
     member _.InsertBatch(time: int64, updates: seq<'K * 'V * int64>) =
@@ -131,8 +121,8 @@ type LSMTemporalTrace<'K,'V when 'K : comparison and 'V : comparison>
     member _.QueryTimeRange(startTime: int64, endTime: int64) : Task<seq<struct(int64 * struct('K*'V*int64) array)>> =
         task {
             use it = zoneTree.CreateIterator()
-            // Attempt to seek to start time to avoid scanning from the beginning.
-            trySeekToStartTime it startTime
+            // Seek to the first key at or after (startTime, min K, min V).
+            seekToStart it startTime
             let current = ResizeArray<struct(int64 * struct('K*'V*int64) array)>()
             let acc = Dictionary<int64, ResizeArray<struct('K*'V*int64)>>()
             let mutable cont = it.Next()
