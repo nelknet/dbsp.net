@@ -92,8 +92,10 @@ type CircuitLargeScaleBenchmarks() =
                 PriceCents = 100 + rnd.Next(50_000)
                 Timestamp = now - int64 (rnd.Next(0, 60*60*24*60))
             })
-        // Right dimension
-        this.baseRight <- Array.init 10_000 (fun pid -> pid, if pid % 2 = 0 then "A" else "B")
+        // Right dimension (smaller in quick mode)
+        let quick = String.Equals(Environment.GetEnvironmentVariable("DBSP_QUICK_BENCH"), "1", StringComparison.OrdinalIgnoreCase)
+        let rightSize = if quick then 5_000 else 10_000
+        this.baseRight <- Array.init rightSize (fun pid -> pid, if pid % 2 = 0 then "A" else "B")
         this.rightZ <- ZSet.ofSeq (seq { for (pid, cls) in this.baseRight -> ((pid, cls), 1) }) |> ZSet.mapKeys id
 
         // Preload operator states with base data (steady-state)
@@ -106,10 +108,11 @@ type CircuitLargeScaleBenchmarks() =
         let mapped = this.filterMap.EvalAsync(leftBaseZ).Result
         let _ = (this.joinOp.EvalAsync mapped ZSet.empty).Result in ()
 
-        // 3) Build initial aggregated state (optional): apply one delta through project+agg so aggregator has state
-        let joinedDelta = (this.joinOp.EvalAsync ZSet.empty ZSet.empty).Result |> IndexedZSet.toZSet
-        let toAgg = this.projectToAgg.EvalAsync(joinedDelta).Result
-        let _ = this.sumAgg.EvalAsync(toAgg).Result in ()
+        // 3) Optionally seed aggregator; skip in quick mode
+        if not quick then
+            let joinedDelta = (this.joinOp.EvalAsync ZSet.empty ZSet.empty).Result |> IndexedZSet.toZSet
+            let toAgg = this.projectToAgg.EvalAsync(joinedDelta).Result
+            let _ = this.sumAgg.EvalAsync(toAgg).Result in ()
 
         // Prepare change set
         this.changes <- Array.init this.ChangeCount (fun _ ->

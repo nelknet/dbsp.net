@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>BenchmarkRun-joined-2025-09-11-14-18-35</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet v0.15.2, macOS Sequoia 15.6.1 (24G90) [Darwin 24.6.0]
+Apple M4 Max, 1 CPU, 16 logical and 16 physical cores
+.NET SDK 9.0.304
+  [Host]   : .NET 9.0.8 (9.0.825.36511), Arm64 RyuJIT AdvSIMD DEBUG
+  .NET 9.0 : .NET 9.0.8 (9.0.825.36511), Arm64 RyuJIT AdvSIMD
+</code></pre>
+<pre><code>Runtime=.NET 9.0  
+</code></pre>
+
+<table>
+<thead><tr><th>Method                        </th><th>Job  </th><th>Toolchain       </th><th>IterationCount</th><th>WarmupCount</th><th>DataSize</th><th>ChangeCount</th><th>Mean      </th><th>Error    </th><th>StdDev   </th><th>Ratio</th><th>RatioSD</th><th>Gen0</th><th>Gen1</th><th>Gen2</th><th>Allocated</th><th>Alloc Ratio</th>
+</tr>
+</thead><tbody><tr><td>Naive_Recompute_All</td><td>.NET 9.0</td><td>Default</td><td>Default</td><td>Default</td><td>100000</td><td>1</td><td>20,207,851.4 ns</td><td>403,010.11 ns</td><td>509,678.80 ns</td><td>1.001</td><td>0.04</td><td>1781.2500</td><td>1218.7500</td><td>593.7500</td><td>14880.3 KB</td><td>1.000</td>
+</tr><tr><td>Incremental_Circuit</td><td>.NET 9.0</td><td>Default</td><td>Default</td><td>Default</td><td>100000</td><td>1</td><td>108,010.5 ns</td><td>568.64 ns</td><td>531.91 ns</td><td>0.005</td><td>0.00</td><td>0.6104</td><td>-</td><td>-</td><td>5.56 KB</td><td>0.000</td>
+</tr><tr><td>Incremental_Circuit_FusedJoinProject</td><td>.NET 9.0</td><td>Default</td><td>Default</td><td>Default</td><td>100000</td><td>1</td><td>454.2 ns</td><td>1.97 ns</td><td>1.84 ns</td><td>0.000</td><td>0.00</td><td>0.4926</td><td>0.0019</td><td>-</td><td>4.02 KB</td><td>0.000</td>
+</tr><tr><td>Naive_Recompute_All</td><td>QuickInProc</td><td>InProcessEmitToolchain</td><td>5</td><td>1</td><td>100000</td><td>1</td><td>19,416,768.5 ns</td><td>2,548,209.05 ns</td><td>661,761.80 ns</td><td>1.001</td><td>0.04</td><td>1750.0000</td><td>1156.2500</td><td>562.5000</td><td>14882.79 KB</td><td>1.000</td>
+</tr><tr><td>Incremental_Circuit</td><td>QuickInProc</td><td>InProcessEmitToolchain</td><td>5</td><td>1</td><td>100000</td><td>1</td><td>132,367.8 ns</td><td>1,467.43 ns</td><td>381.09 ns</td><td>0.007</td><td>0.00</td><td>0.4883</td><td>-</td><td>-</td><td>5.56 KB</td><td>0.000</td>
+</tr><tr><td>Incremental_Circuit_FusedJoinProject</td><td>QuickInProc</td><td>InProcessEmitToolchain</td><td>5</td><td>1</td><td>100000</td><td>1</td><td>502.6 ns</td><td>42.61 ns</td><td>11.06 ns</td><td>0.000</td><td>0.00</td><td>0.4921</td><td>0.0010</td><td>-</td><td>4.02 KB</td><td>0.000</td>
+</tr><tr><td>Naive_Recompute_All</td><td>.NET 9.0</td><td>Default</td><td>Default</td><td>Default</td><td>100000</td><td>10</td><td>19,870,829.9 ns</td><td>388,897.87 ns</td><td>767,646.50 ns</td><td>1.001</td><td>0.05</td><td>1718.7500</td><td>1156.2500</td><td>531.2500</td><td>14880.51 KB</td><td>1.000</td>
+</tr><tr><td>Incremental_Circuit</td><td>.NET 9.0</td><td>Default</td><td>Default</td><td>Default</td><td>100000</td><td>10</td><td>120,286.3 ns</td><td>343.61 ns</td><td>304.60 ns</td><td>0.006</td><td>0.00</td><td>5.8594</td><td>0.1221</td><td>-</td><td>48.82 KB</td><td>0.003</td>
+</tr><tr><td>Incremental_Circuit_FusedJoinProject</td><td>.NET 9.0</td><td>Default</td><td>Default</td><td>Default</td><td>100000</td><td>10</td><td>5,518.6 ns</td><td>68.47 ns</td><td>57.17 ns</td><td>0.000</td><td>0.00</td><td>1.6785</td><td>0.4196</td><td>-</td><td>13.74 KB</td><td>0.001</td>
+</tr><tr><td>Naive_Recompute_All</td><td>QuickInProc</td><td>InProcessEmitToolchain</td><td>5</td><td>1</td><td>100000</td><td>10</td><td>19,365,247.0 ns</td><td>2,359,945.25 ns</td><td>612,870.29 ns</td><td>1.001</td><td>0.04</td><td>1718.7500</td><td>1218.7500</td><td>531.2500</td><td>14883.3 KB</td><td>1.000</td>
+</tr><tr><td>Incremental_Circuit</td><td>QuickInProc</td><td>InProcessEmitToolchain</td><td>5</td><td>1</td><td>100000</td><td>10</td><td>143,798.4 ns</td><td>2,328.46 ns</td><td>604.69 ns</td><td>0.007</td><td>0.00</td><td>5.8594</td><td>-</td><td>-</td><td>48.75 KB</td><td>0.003</td>
+</tr><tr><td>Incremental_Circuit_FusedJoinProject</td><td>QuickInProc</td><td>InProcessEmitToolchain</td><td>5</td><td>1</td><td>100000</td><td>10</td><td>5,745.4 ns</td><td>105.19 ns</td><td>16.28 ns</td><td>0.000</td><td>0.00</td><td>1.6785</td><td>0.4196</td><td>-</td><td>13.74 KB</td><td>0.001</td>
+</tr><tr><td>Naive_Recompute_All</td><td>.NET 9.0</td><td>Default</td><td>Default</td><td>Default</td><td>100000</td><td>100</td><td>20,554,281.9 ns</td><td>404,137.72 ns</td><td>525,493.24 ns</td><td>1.001</td><td>0.04</td><td>1718.7500</td><td>1125.0000</td><td>531.2500</td><td>14880.56 KB</td><td>1.00</td>
+</tr><tr><td>Incremental_Circuit</td><td>.NET 9.0</td><td>Default</td><td>Default</td><td>Default</td><td>100000</td><td>100</td><td>506,707.2 ns</td><td>2,791.38 ns</td><td>2,474.49 ns</td><td>0.025</td><td>0.00</td><td>160.1563</td><td>41.0156</td><td>-</td><td>1314.53 KB</td><td>0.09</td>
+</tr><tr><td>Incremental_Circuit_FusedJoinProject</td><td>.NET 9.0</td><td>Default</td><td>Default</td><td>Default</td><td>100000</td><td>100</td><td>124,207.6 ns</td><td>811.30 ns</td><td>677.48 ns</td><td>0.006</td><td>0.00</td><td>34.6680</td><td>11.4746</td><td>-</td><td>284.88 KB</td><td>0.02</td>
+</tr><tr><td>Naive_Recompute_All</td><td>QuickInProc</td><td>InProcessEmitToolchain</td><td>5</td><td>1</td><td>100000</td><td>100</td><td>20,823,206.9 ns</td><td>827,060.25 ns</td><td>214,784.92 ns</td><td>1.000</td><td>0.01</td><td>1468.7500</td><td>875.0000</td><td>281.2500</td><td>14881.62 KB</td><td>1.00</td>
+</tr><tr><td>Incremental_Circuit</td><td>QuickInProc</td><td>InProcessEmitToolchain</td><td>5</td><td>1</td><td>100000</td><td>100</td><td>545,187.6 ns</td><td>12,342.87 ns</td><td>3,205.40 ns</td><td>0.026</td><td>0.00</td><td>160.1563</td><td>41.0156</td><td>-</td><td>1313.79 KB</td><td>0.09</td>
+</tr><tr><td>Incremental_Circuit_FusedJoinProject</td><td>QuickInProc</td><td>InProcessEmitToolchain</td><td>5</td><td>1</td><td>100000</td><td>100</td><td>138,729.7 ns</td><td>4,697.30 ns</td><td>726.91 ns</td><td>0.007</td><td>0.00</td><td>34.6680</td><td>11.4746</td><td>-</td><td>284.88 KB</td><td>0.02</td>
+</tr><tr><td>Naive_Recompute_All</td><td>.NET 9.0</td><td>Default</td><td>Default</td><td>Default</td><td>1000000</td><td>1</td><td>179,814,113.0 ns</td><td>2,591,651.67 ns</td><td>2,424,232.59 ns</td><td>1.000</td><td>0.02</td><td>11666.6667</td><td>5333.3333</td><td>333.3333</td><td>143659.57 KB</td><td>1.000</td>
+</tr><tr><td>Incremental_Circuit</td><td>.NET 9.0</td><td>Default</td><td>Default</td><td>Default</td><td>1000000</td><td>1</td><td>137,845.9 ns</td><td>757.94 ns</td><td>632.91 ns</td><td>0.001</td><td>0.00</td><td>0.4883</td><td>-</td><td>-</td><td>5.56 KB</td><td>0.000</td>
+</tr><tr><td>Incremental_Circuit_FusedJoinProject</td><td>.NET 9.0</td><td>Default</td><td>Default</td><td>Default</td><td>1000000</td><td>1</td><td>466.9 ns</td><td>2.54 ns</td><td>2.38 ns</td><td>0.000</td><td>0.00</td><td>0.4926</td><td>0.0019</td><td>-</td><td>4.02 KB</td><td>0.000</td>
+</tr><tr><td>Naive_Recompute_All</td><td>QuickInProc</td><td>InProcessEmitToolchain</td><td>5</td><td>1</td><td>1000000</td><td>1</td><td>185,985,011.2 ns</td><td>7,814,645.21 ns</td><td>2,029,438.55 ns</td><td>1.000</td><td>0.01</td><td>11666.6667</td><td>5333.3333</td><td>333.3333</td><td>143663.28 KB</td><td>1.000</td>
+</tr><tr><td>Incremental_Circuit</td><td>QuickInProc</td><td>InProcessEmitToolchain</td><td>5</td><td>1</td><td>1000000</td><td>1</td><td>135,793.8 ns</td><td>2,442.01 ns</td><td>634.18 ns</td><td>0.001</td><td>0.00</td><td>0.4883</td><td>-</td><td>-</td><td>5.56 KB</td><td>0.000</td>
+</tr><tr><td>Incremental_Circuit_FusedJoinProject</td><td>QuickInProc</td><td>InProcessEmitToolchain</td><td>5</td><td>1</td><td>1000000</td><td>1</td><td>492.3 ns</td><td>9.48 ns</td><td>1.47 ns</td><td>0.000</td><td>0.00</td><td>0.4921</td><td>0.0010</td><td>-</td><td>4.02 KB</td><td>0.000</td>
+</tr><tr><td>Naive_Recompute_All</td><td>.NET 9.0</td><td>Default</td><td>Default</td><td>Default</td><td>1000000</td><td>10</td><td>179,681,280.6 ns</td><td>2,338,012.13 ns</td><td>2,186,978.00 ns</td><td>1.000</td><td>0.02</td><td>11666.6667</td><td>5333.3333</td><td>333.3333</td><td>143659.62 KB</td><td>1.000</td>
+</tr><tr><td>Incremental_Circuit</td><td>.NET 9.0</td><td>Default</td><td>Default</td><td>Default</td><td>1000000</td><td>10</td><td>155,736.2 ns</td><td>839.33 ns</td><td>785.11 ns</td><td>0.001</td><td>0.00</td><td>9.7656</td><td>0.7324</td><td>-</td><td>81.32 KB</td><td>0.001</td>
+</tr><tr><td>Incremental_Circuit_FusedJoinProject</td><td>.NET 9.0</td><td>Default</td><td>Default</td><td>Default</td><td>1000000</td><td>10</td><td>7,699.5 ns</td><td>59.33 ns</td><td>55.50 ns</td><td>0.000</td><td>0.00</td><td>1.9989</td><td>0.5035</td><td>-</td><td>16.39 KB</td><td>0.000</td>
+</tr><tr><td>Naive_Recompute_All</td><td>QuickInProc</td><td>InProcessEmitToolchain</td><td>5</td><td>1</td><td>1000000</td><td>10</td><td>173,032,280.6 ns</td><td>6,039,246.20 ns</td><td>1,568,373.06 ns</td><td>1.000</td><td>0.01</td><td>11666.6667</td><td>5333.3333</td><td>333.3333</td><td>143663.19 KB</td><td>1.000</td>
+</tr><tr><td>Incremental_Circuit</td><td>QuickInProc</td><td>InProcessEmitToolchain</td><td>5</td><td>1</td><td>1000000</td><td>10</td><td>156,885.4 ns</td><td>2,100.71 ns</td><td>545.55 ns</td><td>0.001</td><td>0.00</td><td>9.7656</td><td>0.7324</td><td>-</td><td>81.27 KB</td><td>0.001</td>
+</tr><tr><td>Incremental_Circuit_FusedJoinProject</td><td>QuickInProc</td><td>InProcessEmitToolchain</td><td>5</td><td>1</td><td>1000000</td><td>10</td><td>7,452.3 ns</td><td>534.45 ns</td><td>138.79 ns</td><td>0.000</td><td>0.00</td><td>2.0065</td><td>0.5035</td><td>-</td><td>16.39 KB</td><td>0.000</td>
+</tr><tr><td>Naive_Recompute_All</td><td>.NET 9.0</td><td>Default</td><td>Default</td><td>Default</td><td>1000000</td><td>100</td><td>179,988,673.1 ns</td><td>3,537,647.90 ns</td><td>6,195,905.42 ns</td><td>1.001</td><td>0.05</td><td>11666.6667</td><td>5333.3333</td><td>333.3333</td><td>143659.23 KB</td><td>1.000</td>
+</tr><tr><td>Incremental_Circuit</td><td>.NET 9.0</td><td>Default</td><td>Default</td><td>Default</td><td>1000000</td><td>100</td><td>870,126.0 ns</td><td>4,673.37 ns</td><td>4,142.83 ns</td><td>0.005</td><td>0.00</td><td>291.9922</td><td>87.8906</td><td>-</td><td>2386.41 KB</td><td>0.017</td>
+</tr><tr><td>Incremental_Circuit_FusedJoinProject</td><td>.NET 9.0</td><td>Default</td><td>Default</td><td>Default</td><td>1000000</td><td>100</td><td>203,015.8 ns</td><td>743.65 ns</td><td>695.61 ns</td><td>0.001</td><td>0.00</td><td>53.9551</td><td>17.8223</td><td>-</td><td>442.42 KB</td><td>0.003</td>
+</tr><tr><td>Naive_Recompute_All</td><td>QuickInProc</td><td>InProcessEmitToolchain</td><td>5</td><td>1</td><td>1000000</td><td>100</td><td>185,829,272.2 ns</td><td>9,345,085.65 ns</td><td>2,426,889.07 ns</td><td>1.000</td><td>0.02</td><td>11666.6667</td><td>5333.3333</td><td>333.3333</td><td>143663.28 KB</td><td>1.000</td>
+</tr><tr><td>Incremental_Circuit</td><td>QuickInProc</td><td>InProcessEmitToolchain</td><td>5</td><td>1</td><td>1000000</td><td>100</td><td>927,399.9 ns</td><td>25,331.83 ns</td><td>3,920.13 ns</td><td>0.005</td><td>0.00</td><td>291.9922</td><td>104.4922</td><td>-</td><td>2386.98 KB</td><td>0.017</td>
+</tr><tr><td>Incremental_Circuit_FusedJoinProject</td><td>QuickInProc</td><td>InProcessEmitToolchain</td><td>5</td><td>1</td><td>1000000</td><td>100</td><td>211,721.7 ns</td><td>11,705.02 ns</td><td>3,039.76 ns</td><td>0.001</td><td>0.00</td><td>53.9551</td><td>17.8223</td><td>-</td><td>442.42 KB</td><td>0.003</td>
+</tr></tbody></table>
+</body>
+</html>

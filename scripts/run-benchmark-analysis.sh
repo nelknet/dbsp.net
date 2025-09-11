@@ -86,9 +86,8 @@ if [[ "$QUICK" == true ]]; then
     BENCHMARK_ARGS+=("--job" "short")
 fi
 
-if [[ "$FILTER" != "*" ]]; then
-    BENCHMARK_ARGS+=("--filter" "$FILTER")
-fi
+# Always pass a filter to avoid interactive prompts (use '*' for all)
+BENCHMARK_ARGS+=("--filter" "$FILTER")
 
 cd test/DBSP.Tests.Performance
 if ! dotnet run -c Release -- "${BENCHMARK_ARGS[@]}"; then
@@ -97,6 +96,9 @@ fi
 cd ../..
 
 echo "📈 Analyzing benchmark results with BDNA..."
+
+# Ensure dotnet local tools are available (bdna)
+dotnet tool restore >/dev/null 2>&1 || true
 
 # Find JSON report files
 JSON_FILES=$(find "$RESULTS_DIR" -name "*-report-full.json" -type f | wc -l)

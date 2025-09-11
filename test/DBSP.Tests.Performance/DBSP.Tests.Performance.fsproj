@@ -9,6 +9,7 @@
     <Compile Include="Experimental.FastZSet.fs" />
     <Compile Include="DataStructureBenchmarks.fs" />
     <Compile Include="DataStructureComparisonBenchmarks.fs" />
+    <Compile Include="FastZSetMicroBenchmarks.fs" />
     <Compile Include="AlgebraicDispatchBenchmarks.fs" />
     <Compile Include="FastBenchmarks.fs" />
     <Compile Include="SimpleBenchmark.fs" />

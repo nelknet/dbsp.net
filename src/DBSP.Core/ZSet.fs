@@ -115,6 +115,18 @@ module ZSet =
         HashMap.toSeq zset.Inner
         |> Seq.filter (fun (_, weight) -> weight <> 0)
 
+    /// Iterate over all entries (including zero weights if present)
+    let iter (f: 'K -> int -> unit) (zset: ZSet<'K>) =
+        HashMap.iter (fun k w -> f k w) zset.Inner
+
+    /// Check if key exists in the ZSet (ignores weight value)
+    let containsKey (key: 'K) (zset: ZSet<'K>) =
+        HashMap.containsKey key zset.Inner
+
+    /// Try find weight for a key
+    let tryFind (key: 'K) (zset: ZSet<'K>) =
+        HashMap.tryFind key zset.Inner
+
     /// Convenient inline functions using F# 7+ simplified SRTP syntax
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     let inline add (zset1: ZSet<'K>) (zset2: ZSet<'K>) = zset1 + zset2

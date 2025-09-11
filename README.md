@@ -700,3 +700,29 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <div align="center">
 Built with ❤️ using F# and .NET
 </div>
+- Persistent temporal storage in a circuit (LSM + snapshots)
+
+```
+open DBSP.Storage
+open DBSP.Circuit
+
+let cfg = { DataPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "dbsp_quickstart")
+            MaxMemoryBytes = 1_000_000_000L; CompactionThreshold = 64; WriteBufferSize = 16384; BlockCacheSize = 1_000_000L; SpillThreshold = 0.8 }
+use trace = new LSMTemporalTrace<int,string>(cfg, SerializerFactory.CreateMessagePack<struct (int64 * int * string)>())
+
+// Ingest batches at times 1 and 3
+trace.InsertBatch(1L, [ (1, "a", 1L); (2, "b", 1L) ]) |> Async.AwaitTask |> Async.RunSynchronously
+trace.InsertBatch(3L, [ (2, "b", -1L); (3, "c", 2L) ]) |> Async.AwaitTask |> Async.RunSynchronously
+
+// Build circuit
+let (circuit, snapshotOut) =
+    RootCircuit.Build(fun b ->
+        let clock = b.AddClock("clock")
+        let out = b.AddSnapshot("snapshot", trace :> ITemporalTrace<int,string>, clock)
+        out)
+
+let runtime = CircuitRuntimeModule.create circuit { RuntimeConfig.Default with MaintenanceEverySteps = 0L }
+runtime.Start() |> ignore
+runtime.ExecuteStepAsync() |> Async.AwaitTask |> Async.RunSynchronously |> ignore // t=1
+let t1 = snapshotOut.Value // contains entries up to time 1
+```

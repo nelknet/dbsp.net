@@ -41,3 +41,28 @@ type StorageBenchmarks() =
     [<Benchmark(Description="Compact (explicit)")>]
     member _.Compact() =
         lsm.Compact() |> Async.AwaitTask |> Async.RunSynchronously
+
+[<MemoryDiagnoser>]
+type HybridStorageBenchmarks() =
+    let tmp = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "dbsp_hybrid_bench_" + string (System.Guid.NewGuid()))
+    let config = { DataPath = tmp; MaxMemoryBytes = 4_000_000L; CompactionThreshold = 64; WriteBufferSize = 1 <<< 14; BlockCacheSize = 8_000_000L; SpillThreshold = 0.1 }
+    let mgr = AdaptiveStorageManager(config, StorageMode.Hybrid) :> IStorageManager
+    let hybrid = mgr.GetBackend<int,string>()
+    let mutable data : (int*string*int64) array = [||]
+
+    [<Params(10000)>]
+    member val BatchSize = 0 with get, set
+
+    [<GlobalSetup>]
+    member this.Setup() =
+        System.IO.Directory.CreateDirectory(tmp) |> ignore
+        data <- [| for i in 1 .. this.BatchSize -> (i, "v", 1L) |]
+
+    [<Benchmark(Description="Hybrid_WriteBatch")>]
+    member _.WriteBatch() =
+        hybrid.StoreBatch(data) |> Async.AwaitTask |> Async.RunSynchronously
+
+    [<Benchmark(Description="Hybrid_IterateAll")>]
+    member _.IterateAll() =
+        let it = hybrid.GetIterator() |> Async.AwaitTask |> Async.RunSynchronously
+        it |> Seq.length |> ignore

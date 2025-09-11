@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>BenchmarkRun-joined-2025-09-11-15-26-54</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet v0.15.2, macOS Sequoia 15.6.1 (24G90) [Darwin 24.6.0]
+Apple M4 Max, 1 CPU, 16 logical and 16 physical cores
+.NET SDK 9.0.304
+  [Host] : .NET 9.0.8 (9.0.825.36511), Arm64 RyuJIT AdvSIMD DEBUG
+</code></pre>
+<pre><code>Job=QuickInProc  Toolchain=InProcessEmitToolchain  IterationCount=5  
+WarmupCount=1  
+</code></pre>
+
+<table>
+<thead><tr><th>Method      </th><th>Size</th><th>Delta</th><th>Mean </th><th>Error</th><th>StdDev</th><th>Ratio</th><th>Gen0</th><th>Gen1</th><th>Allocated</th><th>Alloc Ratio</th>
+</tr>
+</thead><tbody><tr><td>ToSeq_Enumerate</td><td>1000</td><td>100</td><td>8,008.5 ns</td><td>297.82 ns</td><td>77.34 ns</td><td>1.00</td><td>2.8839</td><td>-</td><td>24208 B</td><td>1.00</td>
+</tr><tr><td>Iter_Enumerate</td><td>1000</td><td>100</td><td>6,407.7 ns</td><td>331.63 ns</td><td>51.32 ns</td><td>0.80</td><td>3.3493</td><td>-</td><td>28072 B</td><td>1.16</td>
+</tr><tr><td>ContainsKey_Random</td><td>1000</td><td>100</td><td>142.7 ns</td><td>3.27 ns</td><td>0.51 ns</td><td>0.02</td><td>-</td><td>-</td><td>-</td><td>0.00</td>
+</tr><tr><td>TryFind_Random</td><td>1000</td><td>100</td><td>348.2 ns</td><td>6.18 ns</td><td>1.60 ns</td><td>0.04</td><td>0.2866</td><td>-</td><td>2400 B</td><td>0.10</td>
+</tr><tr><td>UnionMany_Deltas</td><td>1000</td><td>100</td><td>11,904.0 ns</td><td>183.11 ns</td><td>47.55 ns</td><td>1.49</td><td>10.8185</td><td>1.3580</td><td>90488 B</td><td>3.74</td>
+</tr><tr><td>ToSeq_Enumerate</td><td>10000</td><td>100</td><td>78,326.1 ns</td><td>1,266.31 ns</td><td>328.86 ns</td><td>1.000</td><td>28.6865</td><td>-</td><td>240209 B</td><td>1.000</td>
+</tr><tr><td>Iter_Enumerate</td><td>10000</td><td>100</td><td>61,330.0 ns</td><td>1,212.08 ns</td><td>314.77 ns</td><td>0.783</td><td>33.4473</td><td>4.1504</td><td>280073 B</td><td>1.166</td>
+</tr><tr><td>ContainsKey_Random</td><td>10000</td><td>100</td><td>141.3 ns</td><td>3.55 ns</td><td>0.55 ns</td><td>0.002</td><td>-</td><td>-</td><td>-</td><td>0.000</td>
+</tr><tr><td>TryFind_Random</td><td>10000</td><td>100</td><td>346.4 ns</td><td>3.39 ns</td><td>0.88 ns</td><td>0.004</td><td>0.2866</td><td>-</td><td>2400 B</td><td>0.010</td>
+</tr><tr><td>UnionMany_Deltas</td><td>10000</td><td>100</td><td>11,899.1 ns</td><td>133.42 ns</td><td>34.65 ns</td><td>0.152</td><td>10.8185</td><td>1.5259</td><td>90488 B</td><td>0.377</td>
+</tr></tbody></table>
+</body>
+</html>
