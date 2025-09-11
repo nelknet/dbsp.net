@@ -13,6 +13,9 @@ type RuntimeConfig = {
     MaxBufferSize: int
     EnableCheckpointing: bool
     StoragePath: string option
+    MaintenanceEverySteps: int64
+    MaintainBeforeLag: int64
+    MaintainBucketSize: int64
 } with
     static member Default = {
         WorkerThreads = Environment.ProcessorCount
@@ -20,6 +23,9 @@ type RuntimeConfig = {
         MaxBufferSize = 10000
         EnableCheckpointing = false
         StoragePath = None
+        MaintenanceEverySteps = 0L
+        MaintainBeforeLag = 0L
+        MaintainBucketSize = 0L
     }
 
 /// Circuit execution state
@@ -51,11 +57,9 @@ type CircuitRuntime internal (circuit: CircuitDefinition, config: RuntimeConfig)
                 // Execute registered operators
                 for op in circuit.Executables do
                     do! op.StepAsync()
-                // Periodic maintenance hooks
-                match config.StoragePath with
-                | _ ->
-                    let every = 100L // default cadence; see RegisterMaintenance
-                    if stepsExecuted - lastMaintenance >= every then
+                // Periodic maintenance hooks (if configured)
+                if config.MaintenanceEverySteps > 0L then
+                    if stepsExecuted - lastMaintenance >= config.MaintenanceEverySteps then
                         for hook in maintenanceHooks do
                             do! hook()
                         lastMaintenance <- stepsExecuted
