@@ -62,8 +62,12 @@ type LSMTemporalTrace<'K,'V when 'K : comparison and 'V : comparison>
             .OpenOrCreate()
 
     // No reflection: assume ZoneTree iterator exposes Seek(byref key) for lower-bound positioning.
+    /// Construct the lower-bound composite key used to position iterators at a given start time.
+    let lowerBoundKey (startTime: int64) : TKV<'K,'V> =
+        { T = startTime; K = Unchecked.defaultof<'K>; V = Unchecked.defaultof<'V> }
+
     let seekToStart (it: IZoneTreeIterator<TKV<'K,'V>, int64>) (startTime: int64) =
-        let mutable lb = { T = startTime; K = Unchecked.defaultof<'K>; V = Unchecked.defaultof<'V> }
+        let mutable lb = lowerBoundKey startTime
         it.Seek(&lb)
 
     /// Insert a batch of updates at a logical time. Coalesces within-batch duplicates.

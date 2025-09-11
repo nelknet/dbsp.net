@@ -81,6 +81,12 @@ Future work: Use ZoneTree lower-bound seek to jump directly to the first `K >= s
 - Cache sizing: `BlockCacheSize` split heuristically to key/value caches; adjust based on working set and access pattern.
 - Serialization: consider compressed serializer for large `V`; for small `V`, standard serializer avoids extra CPU.
 
+## ZoneTree Iterator Assumptions
+
+- We assume the ZoneTree iterator exposes a `Seek(byref key)` method used for lower-bound positioning.
+- For temporal queries, we seek to the composite lower bound `(startTime, default K, default V)`. We rely on F#'s `comparison` to order defaults consistently.
+- This tight coupling is intentional: if ZoneTree’s API changes, we will update our code accordingly rather than use reflection.
+
 ## Testing & Benchmarks
 
 - Unit tests: CRUD, iteration, and range coverage.
