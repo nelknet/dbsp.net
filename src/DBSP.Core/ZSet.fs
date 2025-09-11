@@ -333,10 +333,12 @@ module ZSet =
 
     /// Builder for efficient ZSet construction
     type ZSetBuilder<'K when 'K : equality>() =
-        let dict = FZ.empty<'K> 16
-        member _.Add(key: 'K, weight: int) = if weight <> 0 then FZ.insertOrUpdate dict key weight
-        member this.AddRange(pairs: seq<'K * int>) = for (k,w) in pairs do this.Add(k,w)
-        member _.Build() = { Inner = dict }
+        let pairs = System.Collections.Generic.List<'K * int>(128)
+        member _.Add(key: 'K, weight: int) = if weight <> 0 then pairs.Add((key, weight))
+        member this.AddRange(ps: seq<'K * int>) = for (k,w) in ps do this.Add(k,w)
+        member _.Build() =
+            let arr = pairs.ToArray()
+            { Inner = FZ.ofSeq arr }
 
     /// Build ZSet efficiently using builder pattern
     let buildZSet (builderFn: ZSetBuilder<'K> -> unit) =
@@ -361,6 +363,15 @@ module ZSet =
     /// Try get weight
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     let tryFind (key: 'K) (zset: ZSet<'K>) = FZ.tryFind zset.Inner key
+
+    /// Union many ZSets with pre-sizing based on key counts
+    let unionMany (sets: seq<ZSet<'K>>) =
+        let totalKeys = sets |> Seq.fold (fun acc z -> acc + z.Inner.Count) 0
+        let initialCap = max 16 (1 <<< (32 - System.Numerics.BitOperations.LeadingZeroCount(uint32 (max 1 (totalKeys * 2 - 1)))))
+        let dict = FZ.empty<'K> initialCap
+        for z in sets do
+            iter (fun k w -> if w <> 0 then FZ.insertOrUpdate dict k w) z
+        { Inner = dict }
 
     /// Convenient inline functions using F# 7+ simplified SRTP syntax
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
