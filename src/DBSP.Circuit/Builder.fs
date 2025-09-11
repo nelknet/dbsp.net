@@ -43,8 +43,7 @@ type Scope =
     | RootScope
     | ChildScope of parent: obj
 
-/// Stream handle representing data flow between operators
-[<Struct>]
+/// Stream handle representing data flow between operators (reference type)
 type StreamHandle<'T> = {
     NodeId: NodeId
     mutable Value: 'T option
