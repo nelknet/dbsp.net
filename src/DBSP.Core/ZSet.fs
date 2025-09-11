@@ -97,6 +97,34 @@ module Collections =
                     bucket.HashCode <- Helpers.HashCode.tombstone
                     dict.Count <- dict.Count - 1
                     dict.Tombstones <- dict.Tombstones + 1
+                    // Adaptive compaction / shrinking after deletions
+                    let cap = dict.Buckets.Length
+                    // If too many tombstones, compact in place
+                    if dict.Tombstones * 3 > cap then
+                        let old = dict.Buckets
+                        let cap2 = dict.Buckets.Length
+                        dict.Buckets <- Array.create cap2 ZSetBucket.Empty
+                        dict.Mask <- cap2 - 1
+                        dict.Count <- 0
+                        dict.Occupied.Clear()
+                        dict.Tombstones <- 0
+                        for b in old do if b.IsValid then insertOrUpdate dict b.Key b.Weight
+                    else
+                        // If very sparse, shrink to a tighter capacity
+                        let targetCap =
+                            if dict.Count * 4 < cap && cap > 16 then
+                                // shrink to next pow2 above count*2 (load ~0.5)
+                                let desired = max 16 (dict.Count * 2)
+                                1 <<< (32 - System.Numerics.BitOperations.LeadingZeroCount(uint32 (desired - 1)))
+                            else cap
+                        if targetCap < cap then
+                            let old = dict.Buckets
+                            dict.Buckets <- Array.create targetCap ZSetBucket.Empty
+                            dict.Mask <- targetCap - 1
+                            dict.Count <- 0
+                            dict.Occupied.Clear()
+                            dict.Tombstones <- 0
+                            for b in old do if b.IsValid then insertOrUpdate dict b.Key b.Weight
             elif weight <> 0 then
                 // ensure capacity before insertion
                 let load = float dict.Count / float dict.Buckets.Length
@@ -142,7 +170,7 @@ module Collections =
                         idx <- (idx + 1) &&& dict.Mask; d <- d + 1uy
 
         /// Rehash and compact (remove tombstones and rebuild occupied list)
-        let compact<'K when 'K: equality> (dict: FastZSet<'K>) =
+        let compact (dict: FastZSet<'K>) =
             let old = dict.Buckets
             let cap = dict.Buckets.Length
             dict.Buckets <- Array.create cap ZSetBucket.Empty
