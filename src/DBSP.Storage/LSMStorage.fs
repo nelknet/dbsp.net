@@ -4,6 +4,7 @@ open System
 open System.IO
 open System.Threading.Tasks
 open FSharp.Data.Adaptive
+open System.Collections.Generic
 open Tenray.ZoneTree
 open Tenray.ZoneTree.Options
 open Tenray.ZoneTree.Comparers
@@ -80,35 +81,48 @@ type LSMStorageBackend<'K, 'V when 'K : comparison and 'V : comparison>
     interface IStorageBackend<'K, 'V> with
         member _.StoreBatch(updates: ('K * 'V * int64) seq) =
             // Synchronous implementation; wrap with Task.FromResult to avoid FS3511
+            // Optimization: coalesce updates per (K,V) within the batch to reduce write amplification.
+            let aggregated = Dictionary<KV<'K,'V>, int64>()
             for (k, v, w) in updates do
-                let kv = { K = k; V = v }
-                let mutable existing = 0L
-                let mutable keyCopy = kv
-                if w = 0L then
-                    () // Zero-weight update is a no-op
-                else
+                if w <> 0L then
+                    let key = { K = k; V = v }
+                    match aggregated.TryGetValue(key) with
+                    | true, existing -> aggregated[key] <- existing + w
+                    | _ -> aggregated[key] <- w
+            // Apply coalesced deltas against the tree
+            for kvp in aggregated do
+                let kv = kvp.Key
+                let delta = kvp.Value
+                if delta <> 0L then
+                    let mutable existing = 0L
+                    let mutable keyCopy = kv
                     if zoneTree.TryGet(&keyCopy, &existing) then
-                        let newW = existing + w
+                        let newW = existing + delta
                         if newW = 0L then
                             let mutable _op = 0L
                             zoneTree.TryDelete(&keyCopy, & _op) |> ignore
                         else
                             zoneTree.Upsert(&keyCopy, &newW) |> ignore
                     else
-                        zoneTree.Upsert(&keyCopy, &w) |> ignore
-                stats <- { stats with BytesWritten = stats.BytesWritten + 16L }
+                        // No prior value; insert delta if non-zero
+                        zoneTree.Upsert(&keyCopy, &delta) |> ignore
+                    stats <- { stats with BytesWritten = stats.BytesWritten + 16L }
             stats <- { stats with KeysStored = int64 (zoneTree.Count()) }
             Task.FromResult(())
 
         member _.Get(k: 'K) =
-            // Generic and correct: scan forward until we reach k
+            // Seek to the first key >= (k, default V) and scan only matching K
             use it = zoneTree.CreateIterator()
+            let mutable lb = { K = k; V = Unchecked.defaultof<'V> }
+            it.Seek(&lb) |> ignore
             stats <- { stats with BytesRead = stats.BytesRead + 16L }
             let mutable res : ('V * int64) option = None
-            while it.Next() && res.IsNone do
+            let mutable cont = it.Next()
+            while cont && res.IsNone do
                 let ck = it.CurrentKey
                 if ck.K = k then res <- Some (ck.V, it.CurrentValue)
-                elif ck.K > k then res <- None
+                elif ck.K > k then cont <- false
+                else cont <- it.Next()
             Task.FromResult(res)
 
         member _.GetIterator() =
@@ -124,25 +138,21 @@ type LSMStorageBackend<'K, 'V when 'K : comparison and 'V : comparison>
 
         member _.GetRangeIterator (startKey: 'K option) (endKey: 'K option) =
             let it = zoneTree.CreateIterator()
+            // Without a generic minimal V, we scan forward until K >= startKey
             let startOk = it.Next()
             let seq = seq {
                 if startOk then
                     let mutable cont = true
                     while cont do
                         let ck = it.CurrentKey
-                        let afterStart =
-                            match startKey with
-                            | Some s -> ck.K >= s
-                            | None -> true
-                        let beforeEnd =
-                            match endKey with
-                            | Some e -> ck.K <= e
-                            | None -> true
-                        if afterStart && beforeEnd then
+                        let within =
+                            (match startKey with Some s -> ck.K >= s | None -> true) &&
+                            (match endKey with Some e -> ck.K <= e | None -> true)
+                        if within then
                             let w = it.CurrentValue
                             if w <> 0L then yield (ck.K, ck.V, w)
                             cont <- it.Next()
-                        else if ck.K > (defaultArg endKey ck.K) then
+                        else if (match endKey with Some e when ck.K > e -> true | _ -> false) then
                             cont <- false
                         else
                             cont <- it.Next()

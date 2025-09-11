@@ -13,6 +13,9 @@
     <Compile Include="LSMBoundaryTests.fs" />
     <Compile Include="LSMPersistenceTests.fs" />
     <Compile Include="LSMRangeEdgeTests.fs" />
+    <Compile Include="TemporalTraceLsmTests.fs" />
+    <Compile Include="TemporalSnapshotCircuitTests.fs" />
+    <Compile Include="HybridManagerTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="NUnit" Version="4.0.0" />
@@ -21,5 +24,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\DBSP.Storage\DBSP.Storage.fsproj" />
+    <ProjectReference Include="..\..\src\DBSP.Circuit\DBSP.Circuit.fsproj" />
   </ItemGroup>
 </Project>

@@ -13,6 +13,9 @@ type RuntimeConfig = {
     MaxBufferSize: int
     EnableCheckpointing: bool
     StoragePath: string option
+    MaintenanceEverySteps: int64
+    MaintainBeforeLag: int64
+    MaintainBucketSize: int64
 } with
     static member Default = {
         WorkerThreads = Environment.ProcessorCount
@@ -20,6 +23,9 @@ type RuntimeConfig = {
         MaxBufferSize = 10000
         EnableCheckpointing = false
         StoragePath = None
+        MaintenanceEverySteps = 0L
+        MaintainBeforeLag = 0L
+        MaintainBucketSize = 0L
     }
 
 /// Circuit execution state
@@ -34,6 +40,8 @@ type CircuitState =
 type CircuitRuntime internal (circuit: CircuitDefinition, config: RuntimeConfig) =
     let mutable currentState = Created
     let mutable stepsExecuted = 0L
+    let mutable lastMaintenance = 0L
+    let maintenanceHooks = System.Collections.Generic.List<unit -> Task<unit>>()
     
     /// Execute single circuit step
     member this.ExecuteStepAsync() = task {
@@ -41,6 +49,20 @@ type CircuitRuntime internal (circuit: CircuitDefinition, config: RuntimeConfig)
             try
                 // Basic execution - increment step counter
                 stepsExecuted <- stepsExecuted + 1L
+                // Advance logical clocks and publish the current time
+                for i = 0 to circuit.Clocks.Length - 1 do
+                    let mutable h = circuit.Clocks.[i]
+                    h.Value <- Some stepsExecuted
+                    circuit.Clocks.[i] <- h
+                // Execute registered operators
+                for op in circuit.Executables do
+                    do! op.StepAsync()
+                // Periodic maintenance hooks (if configured)
+                if config.MaintenanceEverySteps > 0L then
+                    if stepsExecuted - lastMaintenance >= config.MaintenanceEverySteps then
+                        for hook in maintenanceHooks do
+                            do! hook()
+                        lastMaintenance <- stepsExecuted
                 return Ok ()
             with
             | ex ->
@@ -70,6 +92,10 @@ type CircuitRuntime internal (circuit: CircuitDefinition, config: RuntimeConfig)
     
     /// Get steps executed
     member this.StepsExecuted = stepsExecuted
+
+    /// Register a maintenance hook that runs periodically (cadence set by caller/operator).
+    member this.RegisterMaintenance(hook: unit -> Task<unit>) =
+        maintenanceHooks.Add(hook)
 
 /// Circuit handle for managing circuit execution
 type CircuitHandle = {

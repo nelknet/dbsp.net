@@ -5,6 +5,8 @@ open System.Collections.Generic
 open System.Runtime.CompilerServices
 open System.Threading.Tasks
 open FSharp.Data.Adaptive
+open System.Threading.Tasks
+open DBSP.Storage
 
 /// Node identifier for circuit topology
 [<Struct>]
@@ -41,14 +43,36 @@ type Scope =
     | RootScope
     | ChildScope of parent: obj
 
-/// Stream handle representing data flow between operators
-[<Struct>]
+/// Stream handle representing data flow between operators (reference type)
 type StreamHandle<'T> = {
     NodeId: NodeId
     mutable Value: 'T option
     mutable Consumers: int
     mutable RemainingConsumers: int
 }
+
+/// Minimal runtime-executable operator interface
+type IExecutable =
+    abstract member StepAsync: unit -> Task<unit>
+
+/// Snapshot operator: reads time from clock stream and materializes a snapshot from a temporal trace.
+type SnapshotOperator<'K,'V when 'K : comparison and 'V : comparison>
+    (trace: ITemporalTrace<'K,'V>, clock: StreamHandle<int64>, output: StreamHandle<struct('K*'V*int64) array>,
+     ?maintenanceEverySteps: int64, ?maintenanceBeforeLag: int64, ?maintenanceBucketSize: int64) =
+    let mutable outHandle = output
+    interface IExecutable with
+        member _.StepAsync() = task {
+            match clock.Value with
+            | Some t ->
+                let! snap = trace.QueryAtTime(t)
+                outHandle.Value <- Some (snap |> Seq.toArray)
+                match maintenanceEverySteps, maintenanceBeforeLag, maintenanceBucketSize with
+                | Some every, Some lag, Some bucket when t % every = 0L ->
+                    let beforeTime = max 0L (t - lag)
+                    do! trace.Maintain(beforeTime, bucket)
+                | _ -> ()
+            | None -> ()
+        }
 
 /// Simple circuit builder with basic functionality
 type CircuitBuilder internal (circuitId: int64, scope: Scope) =
@@ -58,6 +82,8 @@ type CircuitBuilder internal (circuitId: int64, scope: Scope) =
     let inputHandles = Dictionary<string, obj>() 
     let outputHandles = Dictionary<string, obj>()
     let dependencies = Dictionary<NodeId, NodeId list>()
+    let executables = System.Collections.Generic.List<IExecutable>()
+    let clockHandles = System.Collections.Generic.List<StreamHandle<int64>>()
     
     /// Generate unique node identifier
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
@@ -103,6 +129,24 @@ type CircuitBuilder internal (circuitId: int64, scope: Scope) =
     member this.AddOutput<'T>(source: StreamHandle<'T>, name: string) : StreamHandle<'T> =
         outputHandles.[name] <- box source
         source
+
+    /// Add a logical clock stream; runtime will advance it every step.
+    member this.AddClock(name: string) : StreamHandle<int64> =
+        let handle = this.AddInput<int64>(name)
+        clockHandles.Add(handle)
+        handle
+
+    /// Register an executable operator for runtime stepping.
+    member this.AddExecutable(op: IExecutable) =
+        executables.Add(op)
+
+    /// Add a Snapshot operator wired to a temporal trace and a clock handle.
+    member this.AddSnapshot<'K,'V when 'K : comparison and 'V : comparison>
+        (name: string, trace: ITemporalTrace<'K,'V>, clock: StreamHandle<int64>) : StreamHandle<struct('K*'V*int64) array> =
+        let out = this.AddInput<struct('K*'V*int64) array>(name)
+        let op = SnapshotOperator<'K,'V>(trace, clock, out)
+        this.AddExecutable(op)
+        out
     
     /// Build final circuit
     member this.Build() =
@@ -114,6 +158,8 @@ type CircuitBuilder internal (circuitId: int64, scope: Scope) =
             OutputHandles = outputHandles |> Seq.map (fun kvp -> kvp.Key, kvp.Value) |> Map.ofSeq
             Dependencies = dependencies |> Seq.map (fun kvp -> kvp.Key, kvp.Value) |> Map.ofSeq
             Scope = scope
+            Executables = executables |> Seq.toArray
+            Clocks = clockHandles |> Seq.toArray
         |}
 
 /// Built circuit containing all operators and connections
@@ -125,6 +171,8 @@ type CircuitDefinition = {|
     OutputHandles: Map<string, obj>
     Dependencies: Map<NodeId, NodeId list>
     Scope: Scope
+    Executables: IExecutable array
+    Clocks: StreamHandle<int64> array
 |}
 
 /// Root circuit builder for creating top-level circuits

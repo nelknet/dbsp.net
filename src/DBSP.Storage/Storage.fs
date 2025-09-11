@@ -56,7 +56,7 @@ type IMemoryMonitor =
 
 /// Storage manager interface
 type IStorageManager =
-    abstract member GetBackend<'K, 'V when 'K : comparison> : unit -> IStorageBackend<'K, 'V>
+    abstract member GetBackend<'K, 'V when 'K : comparison and 'V : comparison> : unit -> IStorageBackend<'K, 'V>
     abstract member GetMemoryMonitor: unit -> IMemoryMonitor
     abstract member RegisterSpillCallback: callback: (unit -> Task<unit>) -> unit
 
@@ -146,61 +146,23 @@ type InMemoryStorageBackend<'K, 'V when 'K : comparison>(config: StorageConfig) 
 // LSMStorageBackend is implemented in LSMStorage.fs
 
 /// Adaptive storage manager
-type AdaptiveStorageManager(config: StorageConfig) =
-    let monitor = 
-        { new IMemoryMonitor with
-            member _.GetMemoryPressure() = 
-                let info = GC.GetGCMemoryInfo()
-                float info.HeapSizeBytes / float info.TotalAvailableMemoryBytes
-            member _.RegisterCallback(callback) = () }
-    
-    interface IStorageManager with
-        member _.GetBackend<'K, 'V when 'K : comparison>() =
-            InMemoryStorageBackend<'K, 'V>(config) :> IStorageBackend<'K, 'V>
-            
-        member _.GetMemoryMonitor() = monitor
-        
-        member _.RegisterSpillCallback(callback) = ()
-
-    /// Public helper methods for C# tests
-    member _.GetMemoryPressure() = monitor.GetMemoryPressure()
-    member _.RegisterSpillCallback(callback: unit -> Task<unit>) = monitor.RegisterCallback(fun _ -> callback |> ignore)
-    member _.RegisterSpillCallback(callback: System.Func<Task>) = ()
+// Moved AdaptiveStorageManager and HybridStorageBackend to Storage.Backends.fs for compile order.
 
 /// Hybrid storage backend with basic in-memory semantics (placeholder until disk backend stabilizes)
-type HybridStorageBackend<'K, 'V when 'K : comparison>(config: StorageConfig, _serializer: ISerializer<'K * 'V>) =
-    let mem = InMemoryStorageBackend<'K, 'V>(config) :> IStorageBackend<'K, 'V>
-    interface IStorageBackend<'K, 'V> with
-        member _.StoreBatch(updates) = mem.StoreBatch(updates)
-        member _.Get(key) = mem.Get(key)
-        member _.GetIterator() = mem.GetIterator()
-        member _.GetRangeIterator startKey endKey = mem.GetRangeIterator startKey endKey
-        member _.Compact() = mem.Compact()
-        member _.GetStats() = mem.GetStats()
-        member _.Dispose() = mem.Dispose()
-
-    // C#-friendly bridging methods (ValueTuple interop)
-    member this.StoreBatch(updates: struct ('K * 'V * int64) array) =
-        let seq = updates |> Seq.map (fun struct (k,v,w) -> (k,v,w))
-        (this :> IStorageBackend<'K,'V>).StoreBatch(seq)
-
-    member this.Get(key: 'K) = (this :> IStorageBackend<'K,'V>).Get(key)
-    member this.GetIterator() : Task<seq<struct ('K * 'V * int64)>> =
-        task {
-            let! it = (this :> IStorageBackend<'K,'V>).GetIterator()
-            return it |> Seq.map (fun (k,v,w) -> struct (k,v,w))
-        }
-
-    member this.GetRangeIterator(startKey: int, endKey: int) : Task<seq<struct (int * 'V * int64)>> =
-        task {
-            let! it = (this :> IStorageBackend<'K,'V>).GetRangeIterator (Some (unbox<'K>(box startKey))) (Some (unbox<'K>(box endKey)))
-            return it |> Seq.map (fun (k,v,w) -> struct (unbox<int>(box k), v, w))
-        }
-    // Legacy-style overloads (for F# callers)
-    member this.GetIteratorLegacy() = (this :> IStorageBackend<'K,'V>).GetIterator()
-    member this.GetRangeIteratorLegacy(startKey: 'K, endKey: 'K) = (this :> IStorageBackend<'K,'V>).GetRangeIterator (Some startKey) (Some endKey)
+// HybridStorageBackend moved to Storage.Backends.fs
 
 
 // Hybrid storage backend intentionally omitted until on-disk backend stabilizes
 
 // Temporal trace/spine lives in TemporalStorage.fs (not included yet)
+
+/// Time-aware trace interface for persistent Z-set storage.
+type ITemporalTrace<'K,'V when 'K : comparison and 'V : comparison> =
+    /// Insert a batch of updates at logical time.
+    abstract member InsertBatch: time:int64 * updates: seq<'K * 'V * int64> -> Task<unit>
+    /// Snapshot all updates with T <= time.
+    abstract member QueryAtTime: time:int64 -> Task<seq<struct('K*'V*int64)>>
+    /// Enumerate batches within a time range [start,end].
+    abstract member QueryTimeRange: startTime:int64 * endTime:int64 -> Task<seq<struct(int64 * struct('K*'V*int64) array)>>
+    /// Maintenance: compact older times into coarser buckets.
+    abstract member Maintain: beforeTime:int64 * bucketSize:int64 -> Task<unit>

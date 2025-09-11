@@ -21,11 +21,10 @@
     <Compile Include="Serialization.fs" />
     <Compile Include="Storage.fs" />
     <Compile Include="LSMStorage.fs" />
+    <Compile Include="Storage.Backends.fs" />
+    <Compile Include="LSMTemporalTrace.fs" />
     <Compile Include="Spilling.fs" />
     <Compile Include="TemporalStorage.fs" />
-    <!-- Note: TemporalStorage.fs is included; older experimental files
-         (MemorySpilling.fs, HybridStorage.fs, StorageInterfaces.fs) have
-         been removed in favor of consolidated implementations in Storage.fs. -->
   </ItemGroup>
 
 </Project>
