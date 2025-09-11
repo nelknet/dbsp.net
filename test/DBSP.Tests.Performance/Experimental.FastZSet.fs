@@ -3,10 +3,7 @@ module DBSP.Core.Collections.FastZSet
 open System
 open System.Numerics
 open System.Runtime.CompilerServices
-open Microsoft.FSharp.NativeInterop
     module private Helpers =
-        [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-        let inline retype<'T,'U> (x: 'T) : 'U = (# "" x: 'U #)
         [<Literal>]
         let POSITIVE_INT_MASK = 0x7FFF_FFFF
         [<RequireQualifiedAccess>]
@@ -45,29 +42,15 @@ open Microsoft.FSharp.NativeInterop
     module private StringHasher =
         let stringComparer =
             { new Collections.Generic.IEqualityComparer<string> with
-                member _.Equals(a: string, b: string) =
-                    String.Equals(a, b, StringComparison.Ordinal)
-                member _.GetHashCode(str: string) =
-                    if isNull str then 0
-                    else
-                        let span = str.AsSpan()
-                        let mutable hash1 = (5381u <<< 16) + 5381u
-                        let mutable hash2 = hash1
-                        let mutable length = str.Length
-                        let mutable ptr: nativeptr<uint32> = &&span.GetPinnableReference() |> Helpers.retype
-                        while length > 2 do
-                            length <- length - 4
-                            hash1 <- (BitOperations.RotateLeft(hash1, 5) + hash1) ^^^ (NativePtr.get ptr 0)
-                            hash2 <- (BitOperations.RotateLeft(hash2, 5) + hash2) ^^^ (NativePtr.get ptr 1)
-                            ptr <- NativePtr.add ptr 2
-                        if length > 0 then
-                            hash2 <- (BitOperations.RotateLeft(hash2, 5) + hash2) ^^^ (NativePtr.get ptr 0)
-                        int (hash1 + (hash2 * 1566083941u)) }
+                member _.Equals(a: string, b: string) = String.Equals(a, b, StringComparison.Ordinal)
+                member _.GetHashCode(str: string) = if isNull str then 0 else String.GetHashCode(str, StringComparison.Ordinal) }
 
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     let empty<'K when 'K : equality> (capacity: int) : FastZSet<'K> =
         let actualCapacity = if capacity <= 0 then 16 else 1 <<< (32 - BitOperations.LeadingZeroCount(uint32 (capacity - 1)))
-        let comparer = if typeof<'K> = typeof<string> then StringHasher.stringComparer |> Helpers.retype else System.Collections.Generic.EqualityComparer<'K>.Default
+        let comparer : Collections.Generic.IEqualityComparer<'K> =
+            if typeof<'K> = typeof<string> then Unchecked.unbox StringHasher.stringComparer
+            else System.Collections.Generic.EqualityComparer<'K>.Default
         { Buckets = Array.create actualCapacity ZSetBucket.Empty; Count = 0; Mask = actualCapacity - 1; Comparer = comparer }
 
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
@@ -84,7 +67,7 @@ open Microsoft.FSharp.NativeInterop
                 found <- true; index <- -1
             elif bucket.IsValid && bucket.HashCode = hash && dict.Comparer.Equals(bucket.Key, key) then
                 found <- true
-            elif byte distance > bucket.Distance then
+            elif bucket.IsValid && byte distance > bucket.Distance then
                 found <- true; index <- -1
             else
                 distance <- distance + 1uy
@@ -92,7 +75,7 @@ open Microsoft.FSharp.NativeInterop
         if found then index else -1
 
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    let insertOrUpdate (dict: FastZSet<'K>) (key: 'K) (weight: int) =
+    let rec insertOrUpdate (dict: FastZSet<'K>) (key: 'K) (weight: int) =
         let hash = dict.Comparer.GetHashCode(key) &&& Helpers.POSITIVE_INT_MASK
         let bucketIndex = findBucket dict key hash
         if bucketIndex >= 0 then
@@ -101,14 +84,46 @@ open Microsoft.FSharp.NativeInterop
             if bucket.Weight = 0 then
                 bucket.HashCode <- Helpers.HashCode.tombstone
                 dict.Count <- dict.Count - 1
-        else if weight <> 0 then
-            let insertIndex = hash &&& dict.Mask
-            let bucket = &dict.Buckets.[insertIndex]
-            bucket.HashCode <- hash
-            bucket.Key <- key
-            bucket.Weight <- weight
-            bucket.Distance <- 0uy
-            dict.Count <- dict.Count + 1
+        elif weight <> 0 then
+            // ensure capacity before insertion
+            let load = float dict.Count / float dict.Buckets.Length
+            if load > 0.85 then
+                // simple rehash to double capacity
+                let old = dict.Buckets
+                let newCap = dict.Buckets.Length <<< 1
+                dict.Buckets <- Array.create newCap ZSetBucket.Empty
+                dict.Mask <- newCap - 1
+                dict.Count <- 0
+                for b in old do
+                    if b.IsValid then
+                        insertOrUpdate dict b.Key b.Weight
+            // Robin Hood insertion with stealing
+            let mutable idx = hash &&& dict.Mask
+            let mutable dist = 0uy
+            let mutable k = key
+            let mutable w = weight
+            let mutable h = hash
+            let mutable d = dist
+            let mutable inserted = false
+            while not inserted do
+                let b = &dict.Buckets.[idx]
+                if b.IsEmpty || b.IsTombstone then
+                    b.HashCode <- h; b.Key <- k; b.Weight <- w; b.Distance <- d
+                    dict.Count <- dict.Count + 1
+                    inserted <- true
+                elif b.IsValid && b.HashCode = h && dict.Comparer.Equals(b.Key, k) then
+                    b.Weight <- b.Weight + w
+                    if b.Weight = 0 then
+                        b.HashCode <- Helpers.HashCode.tombstone
+                        dict.Count <- dict.Count - 1
+                    inserted <- true
+                elif b.Distance < d then
+                    let tmpH, tmpD, tmpK, tmpW = b.HashCode, b.Distance, b.Key, b.Weight
+                    b.HashCode <- h; b.Distance <- d; b.Key <- k; b.Weight <- w
+                    h <- tmpH; d <- tmpD; k <- tmpK; w <- tmpW
+                    idx <- (idx + 1) &&& dict.Mask; d <- d + 1uy
+                else
+                    idx <- (idx + 1) &&& dict.Mask; d <- d + 1uy
 
     let ofSeq (pairs: seq<'K * int>) =
         let dict = empty<'K> 16
