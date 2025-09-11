@@ -167,6 +167,12 @@ module Collections =
             if bucketIndex >= 0 then dict.Buckets.[bucketIndex].Weight else 0
 
         [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+        let tryFind (dict: FastZSet<'K>) (key: 'K) =
+            let hash = dict.Comparer.GetHashCode(key) &&& Helpers.POSITIVE_INT_MASK
+            let bucketIndex = findBucket dict key hash
+            if bucketIndex >= 0 then Some dict.Buckets.[bucketIndex].Weight else None
+
+        [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
         let containsKey (dict: FastZSet<'K>) (key: 'K) =
             let hash = dict.Comparer.GetHashCode(key) &&& Helpers.POSITIVE_INT_MASK
             let bucketIndex = findBucket dict key hash
@@ -323,6 +329,10 @@ module ZSet =
     /// Check if key exists
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     let containsKey (key: 'K) (zset: ZSet<'K>) = FZ.containsKey zset.Inner key
+
+    /// Try get weight
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    let tryFind (key: 'K) (zset: ZSet<'K>) = FZ.tryFind zset.Inner key
 
     /// Convenient inline functions using F# 7+ simplified SRTP syntax
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
