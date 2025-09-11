@@ -23,9 +23,9 @@
     <Compile Include="LSMStorage.fs" />
     <Compile Include="Spilling.fs" />
     <Compile Include="TemporalStorage.fs" />
-    <!-- Temporal storage is evolving; kept out of build until interfaces stabilize -->
-    <!-- <Compile Include="TemporalStorage.fs" /> -->
-    <!-- <Compile Include="MemorySpilling.fs" /> -->
+    <!-- Note: TemporalStorage.fs is included; older experimental files
+         (MemorySpilling.fs, HybridStorage.fs, StorageInterfaces.fs) have
+         been removed in favor of consolidated implementations in Storage.fs. -->
   </ItemGroup>
 
 </Project>

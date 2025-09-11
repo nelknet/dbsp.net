@@ -22,14 +22,19 @@ type CircuitOrder = {
     Timestamp: int64
 }
 
-[<SimpleJob(RuntimeMoniker.Net90)>]
 [<MemoryDiagnoser>]
 type CircuitLargeScaleBenchmarks() =
 
-    [<Params(100000, 1000000)>]
+    member this.DataSizes =
+        let quick = System.String.Equals(System.Environment.GetEnvironmentVariable("DBSP_QUICK_BENCH"), "1", System.StringComparison.OrdinalIgnoreCase)
+        if quick then [| 100000; 300000 |] else [| 100000; 1000000 |]
+    [<ParamsSource("DataSizes")>]
     member val DataSize = 0 with get, set
 
-    [<Params(1, 10, 100)>]
+    member this.ChangeCounts =
+        let quick = System.String.Equals(System.Environment.GetEnvironmentVariable("DBSP_QUICK_BENCH"), "1", System.StringComparison.OrdinalIgnoreCase)
+        if quick then [| 1; 100 |] else [| 1; 10; 100 |]
+    [<ParamsSource("ChangeCounts")>]
     member val ChangeCount = 0 with get, set
 
     // Base data and dimension
