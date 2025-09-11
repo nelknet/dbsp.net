@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Experimental.FastZSet.fs" />
     <Compile Include="DataStructureBenchmarks.fs" />
     <Compile Include="DataStructureComparisonBenchmarks.fs" />
     <Compile Include="AlgebraicDispatchBenchmarks.fs" />
