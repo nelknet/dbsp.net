@@ -111,14 +111,18 @@ type LSMStorageBackend<'K, 'V when 'K : comparison and 'V : comparison>
             Task.FromResult(())
 
         member _.Get(k: 'K) =
-            // Generic and correct: scan forward until we reach k
+            // Seek to the first key >= (k, default V) and scan only matching K
             use it = zoneTree.CreateIterator()
+            let mutable lb = { K = k; V = Unchecked.defaultof<'V> }
+            it.Seek(&lb) |> ignore
             stats <- { stats with BytesRead = stats.BytesRead + 16L }
             let mutable res : ('V * int64) option = None
-            while it.Next() && res.IsNone do
+            let mutable cont = it.Next()
+            while cont && res.IsNone do
                 let ck = it.CurrentKey
                 if ck.K = k then res <- Some (ck.V, it.CurrentValue)
-                elif ck.K > k then res <- None
+                elif ck.K > k then cont <- false
+                else cont <- it.Next()
             Task.FromResult(res)
 
         member _.GetIterator() =
@@ -134,25 +138,21 @@ type LSMStorageBackend<'K, 'V when 'K : comparison and 'V : comparison>
 
         member _.GetRangeIterator (startKey: 'K option) (endKey: 'K option) =
             let it = zoneTree.CreateIterator()
+            // Without a generic minimal V, we scan forward until K >= startKey
             let startOk = it.Next()
             let seq = seq {
                 if startOk then
                     let mutable cont = true
                     while cont do
                         let ck = it.CurrentKey
-                        let afterStart =
-                            match startKey with
-                            | Some s -> ck.K >= s
-                            | None -> true
-                        let beforeEnd =
-                            match endKey with
-                            | Some e -> ck.K <= e
-                            | None -> true
-                        if afterStart && beforeEnd then
+                        let within =
+                            (match startKey with Some s -> ck.K >= s | None -> true) &&
+                            (match endKey with Some e -> ck.K <= e | None -> true)
+                        if within then
                             let w = it.CurrentValue
                             if w <> 0L then yield (ck.K, ck.V, w)
                             cont <- it.Next()
-                        else if ck.K > (defaultArg endKey ck.K) then
+                        else if (match endKey with Some e when ck.K > e -> true | _ -> false) then
                             cont <- false
                         else
                             cont <- it.Next()
