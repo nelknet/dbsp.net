@@ -21,6 +21,7 @@
     <Compile Include="Serialization.fs" />
     <Compile Include="Storage.fs" />
     <Compile Include="LSMStorage.fs" />
+    <Compile Include="LSMTemporalTrace.fs" />
     <Compile Include="Spilling.fs" />
     <Compile Include="TemporalStorage.fs" />
   </ItemGroup>
