@@ -91,32 +91,83 @@ module CircuitOptimizerModule =
                 let tryFuse (a:NodeId,b:NodeId) =
                     match Map.tryFind a circuit.Operators, Map.tryFind b circuit.Operators with
                     | Some opA, Some opB ->
-                        match opA, opB with
-                        | (:? ZSetFilterOperator<_> as fop :> obj), (:? ZSetMapOperator<_,_> as mop :> obj) ->
-                            // Use dynamic invocation to create fused operator with same functions
-                            let predObj = (opA :?> obj |> fun o -> o.GetType().GetProperty("Predicate").GetValue(o))
-                            let mapObj = (opB :?> obj |> fun o -> o.GetType().GetProperty("Transform").GetValue(o))
+                        let aIsFilter = opA.GetType().Name.StartsWith("ZSetFilterOperator")
+                        let bIsMap = opB.GetType().Name.StartsWith("ZSetMapOperator")
+                        if aIsFilter && bIsMap then
+                            let predObj = opA.GetType().GetProperty("Predicate").GetValue(opA)
+                            let mapObj = opB.GetType().GetProperty("Transform").GetValue(opB)
                             let mapType = opB.GetType()
                             let genArgs = mapType.GetGenericArguments()
                             let inTy = genArgs.[0]
                             let outTy = genArgs.[1]
                             let fusedTy = typeof<FilterMapOperator<_,_>>.GetGenericTypeDefinition().MakeGenericType([| inTy; outTy |])
                             let fused = Activator.CreateInstance(fusedTy, [| predObj; mapObj |])
-                            // Replace B's operator with fused; redirect A's incoming edges to B; remove (A->B)
                             let ops' = circuit.Operators |> Map.remove a |> Map.add b fused
                             let conns' =
                                 circuit.Connections
                                 |> List.collect (fun (s,t) ->
                                     if s = a && t = b then []
                                     elif t = a then [ (s, b) ]
-                                    elif s = a then [] // eliminate outgoing from A
+                                    elif s = a then []
                                     else [ (s,t) ])
                             Some {|
                                 circuit with
                                     Operators = ops'
                                     Connections = conns'
                             |}
-                        | _ -> None
+                        else None
+                    | _ -> None
+                match circuit.Connections |> List.tryPick tryFuse with
+                | Some c -> c
+                | None -> circuit
+    
+    /// Fusion rule: ZSetMap -> ZSetFilter => MapFilter
+    type MapFilterFusionRule() =
+        let isSingleProducerTarget (conn: (NodeId*NodeId) list) (target: NodeId) =
+            conn |> List.filter (fun (_,t) -> t = target) |> List.length = 1
+        let isSingleConsumerSource (conn: (NodeId*NodeId) list) (source: NodeId) =
+            conn |> List.filter (fun (s,_) -> s = source) |> List.length = 1
+        interface IOptimizationRule with
+            member _.Name = "MapFilter Fusion"
+            member _.CanApply(circuit) =
+                circuit.Connections |> List.exists (fun (a,b) ->
+                    match Map.tryFind a circuit.Operators, Map.tryFind b circuit.Operators with
+                    | Some opA, Some opB ->
+                        let aIsMap = opA.GetType().Name.StartsWith("ZSetMapOperator")
+                        let bIsFilter = opB.GetType().Name.StartsWith("ZSetFilterOperator")
+                        aIsMap && bIsFilter
+                        && isSingleProducerTarget circuit.Connections b
+                        && isSingleConsumerSource circuit.Connections a
+                    | _ -> false)
+            member _.Apply(circuit) =
+                let tryFuse (a:NodeId,b:NodeId) =
+                    match Map.tryFind a circuit.Operators, Map.tryFind b circuit.Operators with
+                    | Some opA, Some opB ->
+                        let aIsMap = opA.GetType().Name.StartsWith("ZSetMapOperator")
+                        let bIsFilter = opB.GetType().Name.StartsWith("ZSetFilterOperator")
+                        if aIsMap && bIsFilter then
+                            let mapObj = opA.GetType().GetProperty("Transform").GetValue(opA)
+                            let predObj = opB.GetType().GetProperty("Predicate").GetValue(opB)
+                            let mapType = opA.GetType()
+                            let genArgs = mapType.GetGenericArguments()
+                            let inTy = genArgs.[0]
+                            let outTy = genArgs.[1]
+                            let fusedTy = typeof<MapFilterOperator<_,_>>.GetGenericTypeDefinition().MakeGenericType([| inTy; outTy |])
+                            let fused = Activator.CreateInstance(fusedTy, [| mapObj; predObj |])
+                            let ops' = circuit.Operators |> Map.remove a |> Map.add b fused
+                            let conns' =
+                                circuit.Connections
+                                |> List.collect (fun (s,t) ->
+                                    if s = a && t = b then []
+                                    elif t = a then [ (s, b) ]
+                                    elif s = a then []
+                                    else [ (s,t) ])
+                            Some {|
+                                circuit with
+                                    Operators = ops'
+                                    Connections = conns'
+                            |}
+                        else None
                     | _ -> None
                 match circuit.Connections |> List.tryPick tryFuse with
                 | Some c -> c
@@ -126,7 +177,7 @@ module CircuitOptimizerModule =
     let private rulesWith (options: OptimizerOptions) : IOptimizationRule list =
         let baseRules = standardRules
         if options.EnableFusion then
-            baseRules @ [ FilterMapFusionRule() :> IOptimizationRule ]
+            baseRules @ [ FilterMapFusionRule() :> IOptimizationRule; MapFilterFusionRule() :> IOptimizationRule ]
         else baseRules
     
     /// Create optimizer with standard rules
@@ -140,7 +191,7 @@ module CircuitOptimizerModule =
     /// Optimize circuit with standard optimizations
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     let optimize (circuit: CircuitDefinition) : CircuitDefinition =
-        let optimizer = createStandard()
+        let optimizer = createWith { EnableFusion = true }
         optimizer.OptimizeOnce(circuit)
 
     /// Optimize circuit with options
