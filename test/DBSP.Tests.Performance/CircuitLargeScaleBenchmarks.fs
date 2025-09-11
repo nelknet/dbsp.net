@@ -22,7 +22,6 @@ type CircuitOrder = {
     Timestamp: int64
 }
 
-[<SimpleJob(RuntimeMoniker.Net90)>]
 [<MemoryDiagnoser>]
 type CircuitLargeScaleBenchmarks() =
 

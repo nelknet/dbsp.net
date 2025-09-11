@@ -99,8 +99,8 @@ module Collections =
                     dict.Tombstones <- dict.Tombstones + 1
                     // Adaptive compaction / shrinking after deletions
                     let cap = dict.Buckets.Length
-                    // If too many tombstones, compact in place
-                    if dict.Tombstones * 3 > cap then
+                    // If too many tombstones, compact in place (threshold ~25%)
+                    if dict.Tombstones * 4 > cap then
                         let old = dict.Buckets
                         let cap2 = dict.Buckets.Length
                         dict.Buckets <- Array.create cap2 ZSetBucket.Empty
@@ -355,6 +355,11 @@ module ZSet =
     /// Iterate without allocations using struct enumerator
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     let iter (f: 'K -> int -> unit) (zset: ZSet<'K>) = FZ.iter f zset.Inner
+
+    /// Frozen snapshot for read-mostly enumeration
+    let toArray (zset: ZSet<'K>) =
+        // Materialize pairs array; callers can cache and iterate cheaply
+        FZ.toSeq zset.Inner |> Seq.toArray
 
     /// Check if key exists
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]

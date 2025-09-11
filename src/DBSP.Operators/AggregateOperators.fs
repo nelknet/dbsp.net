@@ -30,11 +30,11 @@ type AggregateOperator<'K, 'V, 'Acc when 'K: comparison and 'V: comparison and '
         
         state <- updatedState
         
-        // Convert state back to ZSet format for output
-        let result = 
-            HashMap.fold (fun acc key aggValue ->
-                ZSet.insert (key, aggValue) 1 acc  // Weight of 1 for aggregated results
-            ) (ZSet.empty<'K * 'Acc>) updatedState
+        // Convert state back to ZSet format for output (single build)
+        let result =
+            ZSet.buildWith (fun b ->
+                HashMap.iter (fun key aggValue -> b.Add((key, aggValue), 1)) updatedState
+            )
         
         return result
     }
@@ -75,11 +75,11 @@ type CountOperator<'K, 'V when 'K: comparison and 'V: comparison>(?name: string)
         
         counts <- updatedCounts
         
-        // Convert to ZSet output
-        let result = 
-            HashMap.fold (fun acc key count ->
-                ZSet.insert (key, count) 1 acc
-            ) (ZSet.empty<'K * int64>) updatedCounts
+        // Convert to ZSet output (single build)
+        let result =
+            ZSet.buildWith (fun b ->
+                HashMap.iter (fun key count -> b.Add((key, count), 1)) updatedCounts
+            )
         
         return result
     }
@@ -134,12 +134,14 @@ type AverageOperator<'K when 'K: comparison>(?name: string) =
         
         state <- updatedState
         
-        // Calculate averages and convert to ZSet output
-        let result = 
-            HashMap.fold (fun acc key (sum, count) ->
-                let average = sum / float count
-                ZSet.insert (key, average) 1 acc
-            ) (ZSet.empty<'K * float>) updatedState
+        // Calculate averages and convert to ZSet output (single build)
+        let result =
+            ZSet.buildWith (fun b ->
+                HashMap.iter (fun key (sum, count) ->
+                    let average = sum / float count
+                    b.Add((key, average), 1)
+                ) updatedState
+            )
         
         return result
     }
@@ -160,15 +162,14 @@ type DistinctOperator<'K when 'K: comparison>(?name: string) =
     
     override _.EvalAsyncImpl(input: ZSet<'K>) = task {
         // Normalize all weights to ±1 based on sign
-        let result = 
-            ZSet.fold (fun acc key weight ->
-                if weight > 0 then
-                    ZSet.insert key 1 acc
-                elif weight < 0 then
-                    ZSet.insert key (-1) acc
-                else
-                    acc  // Skip zero weights
-            ) (ZSet.empty<'K>) input
+        let result =
+            ZSet.buildWith (fun b ->
+                ZSet.iter (fun key weight ->
+                    if weight > 0 then b.Add(key, 1)
+                    elif weight < 0 then b.Add(key, -1)
+                    else ()
+                ) input
+            )
         return result
     }
 
