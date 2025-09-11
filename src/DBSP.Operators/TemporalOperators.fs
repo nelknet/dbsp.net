@@ -7,6 +7,7 @@ open System.Threading.Tasks
 open DBSP.Core.ZSet
 open DBSP.Core.Stream
 open DBSP.Operators.Interfaces
+open DBSP.Storage
 
 /// Delay operator (z^-1) - delays input by one time step
 type DelayOperator<'T when 'T: equality>(?name: string) =
@@ -178,3 +179,19 @@ module TemporalOperators =
     /// Create a clock operator
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     let inline clock () = new ClockOperator()
+
+    /// Materialize a snapshot at a given time from a temporal trace.
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    let snapshotAt (trace: ITemporalTrace<'K,'V>) (time: int64) : Task<struct('K*'V*int64) array> =
+        task {
+            let! seq = trace.QueryAtTime(time)
+            return seq |> Seq.toArray
+        }
+
+    /// Materialize a time range [startTime, endTime] as per-time batches.
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    let range (trace: ITemporalTrace<'K,'V>) (startTime: int64) (endTime: int64) : Task<struct(int64 * struct('K*'V*int64) array) array> =
+        task {
+            let! seq = trace.QueryTimeRange(startTime, endTime)
+            return seq |> Seq.toArray
+        }

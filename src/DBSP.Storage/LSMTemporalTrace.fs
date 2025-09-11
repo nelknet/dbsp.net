@@ -61,6 +61,21 @@ type LSMTemporalTrace<'K,'V when 'K : comparison and 'V : comparison>
             .SetDiskSegmentMaxItemCount(config.CompactionThreshold)
             .OpenOrCreate()
 
+    /// Try to seek iterator to the first key at or after a given start time using reflection
+    /// to call ZoneTree's seek method if available. Falls back to linear advance.
+    let trySeekToStartTime (it: obj) (startTime: int64) : unit =
+        // Only attempt when K and V are value types to safely construct minimal sentinels.
+        if typeof<'K>.IsValueType && typeof<'V>.IsValueType then
+            try
+                let t = it.GetType()
+                let m = t.GetMethod("Seek")
+                if not (isNull m) then
+                    // Build the lower-bound key (startTime, default K, default V)
+                    let mutable lb = { T = startTime; K = Unchecked.defaultof<'K>; V = Unchecked.defaultof<'V> }
+                    m.Invoke(it, [| box lb |]) |> ignore
+            with _ -> ()
+        else ()
+
     /// Insert a batch of updates at a logical time. Coalesces within-batch duplicates.
     member _.InsertBatch(time: int64, updates: seq<'K * 'V * int64>) =
         // Aggregate by (K,V) to reduce write amplification
@@ -93,7 +108,8 @@ type LSMTemporalTrace<'K,'V when 'K : comparison and 'V : comparison>
         task {
             use it = zoneTree.CreateIterator()
             let dict = Dictionary<struct('K*'V), int64>()
-            while it.Next() do
+            let mutable cont = it.Next()
+            while cont do
                 let k = it.CurrentKey
                 if k.T <= time then
                     let key = struct(k.K, k.V)
@@ -101,6 +117,10 @@ type LSMTemporalTrace<'K,'V when 'K : comparison and 'V : comparison>
                     match dict.TryGetValue(key) with
                     | true, existing -> dict[key] <- existing + w
                     | _ -> dict[key] <- w
+                    cont <- it.Next()
+                else
+                    // Since keys are ordered by (T,K,V), we can stop once k.T > time.
+                    cont <- false
             let seq =
                 dict
                 |> Seq.choose (fun (KeyValue(struct(k,v),w)) -> if w = 0L then None else Some (struct(k,v,w)))
@@ -111,9 +131,12 @@ type LSMTemporalTrace<'K,'V when 'K : comparison and 'V : comparison>
     member _.QueryTimeRange(startTime: int64, endTime: int64) : Task<seq<struct(int64 * struct('K*'V*int64) array)>> =
         task {
             use it = zoneTree.CreateIterator()
+            // Attempt to seek to start time to avoid scanning from the beginning.
+            trySeekToStartTime it startTime
             let current = ResizeArray<struct(int64 * struct('K*'V*int64) array)>()
             let acc = Dictionary<int64, ResizeArray<struct('K*'V*int64)>>()
-            while it.Next() do
+            let mutable cont = it.Next()
+            while cont do
                 let k = it.CurrentKey
                 if k.T >= startTime && k.T <= endTime then
                     let w = it.CurrentValue
@@ -126,6 +149,11 @@ type LSMTemporalTrace<'K,'V when 'K : comparison and 'V : comparison>
                                 acc[k.T] <- b
                                 b
                         bucket.Add(struct(k.K, k.V, w))
+                    cont <- it.Next()
+                else if k.T < startTime then
+                    cont <- it.Next()
+                else // k.T > endTime
+                    cont <- false
             for kv in acc do
                 current.Add(struct(kv.Key, kv.Value.ToArray()))
             // Sort by time
@@ -149,6 +177,46 @@ type LSMTemporalTrace<'K,'V when 'K : comparison and 'V : comparison>
             toRewrite.Clear()
             return ()
         }
+
+    /// Leveled compaction: collapse entries with T < beforeTime into bucketed times of size `bucketSize`.
+    member _.Maintain(beforeTime: int64, bucketSize: int64) =
+        task {
+            if bucketSize <= 0L then return () else
+            // Collect older keys and aggregate into bucketed times.
+            use it = zoneTree.CreateIterator()
+            let oldKeys = ResizeArray<TKV<'K,'V>>()
+            let agg = Dictionary<struct(int64*'K*'V), int64>()
+            let bucketOf (t:int64) = (t / bucketSize) * bucketSize
+            while it.Next() do
+                let k = it.CurrentKey
+                if k.T < beforeTime then
+                    oldKeys.Add(k)
+                    let bt = bucketOf k.T
+                    let key = struct(bt, k.K, k.V)
+                    let w = it.CurrentValue
+                    match agg.TryGetValue(key) with
+                    | true, existing -> agg[key] <- existing + w
+                    | _ -> agg[key] <- w
+            // Delete old keys
+            for k in oldKeys do
+                let mutable key = k
+                let mutable _op = 0L
+                zoneTree.TryDelete(&key, & _op) |> ignore
+            // Upsert aggregated entries (skip zeros)
+            for kvp in agg do
+                let struct(t,k,v) = kvp.Key
+                let w = kvp.Value
+                if w <> 0L then
+                    let mutable key = { T = t; K = k; V = v }
+                    zoneTree.Upsert(&key, &w) |> ignore
+            return ()
+        }
+
+    interface ITemporalTrace<'K,'V> with
+        member this.InsertBatch(time, updates) = this.InsertBatch(time, updates)
+        member this.QueryAtTime(time) = this.QueryAtTime(time)
+        member this.QueryTimeRange(startTime, endTime) = this.QueryTimeRange(startTime, endTime)
+        member this.Maintain(beforeTime, bucketSize) = this.Maintain(beforeTime, bucketSize)
 
     interface IDisposable with
         member _.Dispose() = zoneTree.Dispose()

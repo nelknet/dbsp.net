@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DBSP.Core\DBSP.Core.fsproj" />
+    <ProjectReference Include="..\DBSP.Storage\DBSP.Storage.fsproj" />
   </ItemGroup>
 
   <ItemGroup>

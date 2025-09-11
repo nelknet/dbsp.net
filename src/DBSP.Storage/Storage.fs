@@ -204,3 +204,14 @@ type HybridStorageBackend<'K, 'V when 'K : comparison>(config: StorageConfig, _s
 // Hybrid storage backend intentionally omitted until on-disk backend stabilizes
 
 // Temporal trace/spine lives in TemporalStorage.fs (not included yet)
+
+/// Time-aware trace interface for persistent Z-set storage.
+type ITemporalTrace<'K,'V when 'K : comparison and 'V : comparison> =
+    /// Insert a batch of updates at logical time.
+    abstract member InsertBatch: time:int64 * updates: seq<'K * 'V * int64> -> Task<unit>
+    /// Snapshot all updates with T <= time.
+    abstract member QueryAtTime: time:int64 -> Task<seq<struct('K*'V*int64)>>
+    /// Enumerate batches within a time range [start,end].
+    abstract member QueryTimeRange: startTime:int64 * endTime:int64 -> Task<seq<struct(int64 * struct('K*'V*int64) array)>>
+    /// Maintenance: compact older times into coarser buckets.
+    abstract member Maintain: beforeTime:int64 * bucketSize:int64 -> Task<unit>
