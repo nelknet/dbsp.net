@@ -10,6 +10,16 @@
 //    over time to maintain current counts per customer efficiently.
 //
 // This tutorial prints what’s happening and times both approaches with Stopwatch.
+//
+// DBSP 101 (very short):
+// - A ZSet is a multiset keyed by something (here: CustomerId) with an integer weight per key.
+//   Inserts add +1, deletes add -1, and updates are a -1 on the old key plus a +1 on the new key.
+//   If weights sum to 0, the element “vanishes” (as if nothing happened).
+// - A delta is just a ZSet of changes for this step (tick). Small delta ⇒ small work.
+// - IntegrateOperator accumulates deltas over steps, maintaining the current result. It is the
+//   canonical “running sum” of changes: result(t) = result(t-1) + delta(t).
+// - Steps correspond to discrete time ticks. “changes per step” is how many new/changed orders
+//   arrive at each tick. In production this would be the incoming event batch size.
 
 open System
 open System.Diagnostics
@@ -47,12 +57,18 @@ module Naive =
 // We treat each order as contributing +1 to its customer’s count. On updates that change the order’s customer,
 // we emit a -1 for the old customer and a +1 for the new customer. Deletions emit -1. Insertions emit +1.
 module Incremental =
+    // WHY build a delta?  We want work proportional to what changed, not to the entire dataset.
+    // This function converts row-level changes into a compact per-key delta (CustomerId -> ±count).
+    // The delta captures the net effect for this step; Integrate will add it to the running state.
+    //
     // Build a ZSet delta for a batch of changes to orders
     // changes: sequence of (oldOrder option, newOrder option)
     //  - Insert: (None, Some new)
     //  - Delete: (Some old, None)
     //  - Update: (Some old, Some new)
     let buildDelta (changes: seq<Order option * Order option>) : ZSet<int> =
+        // ZSet.buildWith uses a mutable builder internally and coalesces duplicates efficiently,
+        // avoiding repeated allocation from many singletons.
         ZSet.buildWith (fun b ->
             for (oldO, newO) in changes do
                 match oldO, newO with
@@ -66,6 +82,9 @@ module Incremental =
                         b.Add(n.CustomerId, 1)
                 | None, None -> () )
 
+    // WHY Integrate?  IntegrateOperator is the running-sum operator for ZSets. Each step we get
+    // a small delta; Integrate adds it into the current state, so we never have to rescan all orders.
+    // That’s the core of incremental computation: process the delta, not the world.
     // Use IntegrateOperator to accumulate deltas into a running count per customer
     let integrateDeltas (deltas: ZSet<int> seq) : ZSet<int> =
         let op = new IntegrateOperator<int>()
@@ -113,7 +132,9 @@ let main argv =
     // Generate base data
     let customers = DataGen.customers customerCount
     let initialOrders = DataGen.orders customers initialOrderCount
-    // Insert-only demo flag (accentuates incremental advantage)
+    // Insert-only demo flag (accentuates incremental advantage):
+    // If steps are mostly inserts and the key domain (customers) is small,
+    // incremental work per step stays tiny while naive recomputation keeps scanning everything.
     let insertOnly = true
     // Mutable store of current orders for naive recomputation (fast append)
     let ordersList = ResizeArray<Order>(initialOrders.Length + steps * changesPerStep)
@@ -121,7 +142,7 @@ let main argv =
     // Mutable next id for new inserts
     let mutable nextOrderId = if initialOrders.Length = 0 then 1 else (initialOrders |> Array.maxBy (fun o -> o.Id)).Id + 1
 
-    // Helper to create random changes (insert/update/delete)
+    // “Changes per step” generator (here: pure inserts for clarity)
     let rnd = Random(7)
     let randomInserts (n: int) : Order[] =
         Array.init n (fun _ ->
@@ -133,6 +154,10 @@ let main argv =
 
     // 1) Naive timing loop
     printfn "--- Naive recomputation ---"
+    // Steps: discrete time ticks; at each step we first materialize incoming changes,
+    // then ask “what’s the answer now?”
+    // For a fair benchmark, we compute the initial answer once, outside the timer,
+    // and then time only the per-step work.
     // Precompute baseline counts outside the timed region
     let mutable lastNaiveCounts : Dictionary<int,int> = Naive.recomputeOrderCountsByCustomer (ordersList.ToArray())
     let swNaive = Stopwatch.StartNew()
@@ -149,8 +174,9 @@ let main argv =
     // 2) Incremental timing loop (DBSP-style ZSet + Integrate)
     // Start from empty and feed deltas that reflect changes from the original initialOrders state.
     printfn "--- Incremental (ZSet + Integrate) ---"
-    // Build an initial delta that inserts all current orders’ customer contributions
-    // Build baseline accumulator outside timing (one-time pass over initial orders)
+    // Build baseline accumulator outside timing (one-time pass over initial orders).
+    // This is equivalent to taking the initial per-customer counts and feeding them as a single
+    // large delta to Integrate so that the accumulator starts at the correct state.
     let baselineCounts =
         let d = Dictionary<int,int>()
         for o in ordersList do
@@ -158,8 +184,11 @@ let main argv =
             d[o.CustomerId] <- v
         d
     let accBaseline =
+        // ZSet.buildWith: efficient construction that coalesces repeated keys (same CustomerId)
+        // and avoids temporary allocations. Ideal for building large deltas.
         ZSet.buildWith (fun b ->
             for kv in baselineCounts do b.Add(kv.Key, kv.Value))
+    // IntegrateOperator maintains the running counts: acc <- acc + delta each step.
     let integrate = new IntegrateOperator<int>()
     let mutable acc = accBaseline
 
@@ -170,6 +199,8 @@ let main argv =
     for step in 1..steps do
         // Insert-only delta for this step
         let ins = randomInserts changesPerStep
+        // Delta(t): the net effect of this step’s incoming changes, expressed as weight updates per key.
+        // For inserts, that’s just +1 for the affected CustomerId.
         let delta = ZSet.buildWith (fun b -> for o in ins do b.Add(o.CustomerId, 1))
         acc <- integrate.EvalAsyncImpl(delta).Result
         if step % max 1 (steps / 2) = 0 then
