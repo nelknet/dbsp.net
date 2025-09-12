@@ -20,11 +20,28 @@ This document details the storage layer used by DBSP.NET for persisting Z-set up
   - Comparer orders by K then V for contiguous key scans and range queries.
   - Serializers bridge our pluggable `ISerializer<struct ('K * 'V)>` to ZoneTree’s serializers.
 
+- HybridStorageBackend<'K,'V>:
+  - In-memory overlay that spills to an internal LSM backend when thresholds are exceeded.
+  - Reads overlay memory over disk by key and by range; compaction flushes memory then compacts disk.
+  - Backed by `AdaptiveStorageManager` and configurable via `StorageMode.Hybrid`.
+
 - SerializerFactory:
   - Provides default MessagePack serializers (standard and LZ4-compressed) and an override hook for custom serializers per type.
 
-- SpillCoordinator / AdaptiveStorageManager:
-  - Surfaces memory pressure and hooks for spill decisions; current manager is minimal and returns an in-memory backend.
+- Spill/Management (`AdaptiveStorageManager`):
+  - Exposes a memory pressure monitor and chooses backends based on `StorageMode` (InMemory | LSM | Hybrid).
+  - Hybrid mode uses an in-memory buffer with thresholded spilling to a per-instance LSM store.
+  - LSM mode opens a ZoneTree-backed store using the provided `StorageConfig` and serializers.
+
+## Temporal Trace (LSM)
+
+- `LSMTemporalTrace<'K,'V>`: persistent, time-aware trace over ZoneTree.
+  - Key: composite `TKV{ T:int64; K:'K; V:'V }`; Value: `int64` weight.
+  - Comparer orders by `T`, then `K`, then `V` for efficient time-range scans.
+  - InsertBatch(time, updates): coalesces within-batch duplicates and applies algebraic weight addition per `(T,K,V)`; zero results delete the key.
+  - QueryAtTime(t): scans forward, aggregating all `(K,V)` with `T <= t` and returns non-zero snapshots as `struct(K*V*weight)`.
+  - QueryTimeRange(start,end): uses iterator `Seek` to lower-bound `(start, default K, default V)` and emits per-time batches within `[start,end]`.
+  - Maintain(before,bucket): optionally buckets older times into coarser `bucket` intervals by re-aggregating and rewriting keys.
 
 ## Data Model and Semantics
 
@@ -47,7 +64,7 @@ Rationale: Coalescing reduces ZoneTree writes and delete churn for bursts of upd
 
 - Get(k): returns the first `(k, v, w)` encountered for `K = k`. Tests do not depend on the chosen `v` value; this is primarily a convenience/readiness probe.
 - GetIterator(): forward scan over ZoneTree iterator, yielding `(k,v,w)` for non-zero weights.
-- GetRangeIterator(start,end): forward scan filtered to `K ∈ [start,end]` using the composite-key order.
+- GetRangeIterator(start,end): forward scan filtered to `K ∈ [start,end]` in composite `(K,V)` order. Today we scan until the first `K >= start`; a lower-bound seek can be introduced when a minimal `V` bound is formalized.
 
 Future work: Use ZoneTree lower-bound seek to jump directly to the first `K >= start` to avoid scanning from the beginning on range queries and single-key gets.
 

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>BenchmarkRun-joined-2025-09-11-16-33-21</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet v0.15.2, macOS Sequoia 15.6.1 (24G90) [Darwin 24.6.0]
+Apple M4 Max, 1 CPU, 16 logical and 16 physical cores
+.NET SDK 9.0.304
+  [Host] : .NET 9.0.8 (9.0.825.36511), Arm64 RyuJIT AdvSIMD DEBUG
+</code></pre>
+<pre><code>Job=QuickInProc  Toolchain=InProcessEmitToolchain  IterationCount=5  
+WarmupCount=1  
+</code></pre>
+
+<table>
+<thead><tr><th>Method                        </th><th>DataSize</th><th>ChangeCount</th><th>Mean      </th><th>Error     </th><th>StdDev   </th><th>Ratio</th><th>RatioSD</th><th>Gen0</th><th>Gen1</th><th>Gen2</th><th>Allocated</th><th>Alloc Ratio</th>
+</tr>
+</thead><tbody><tr><td>Naive_Recompute_All</td><td>100000</td><td>1</td><td>21,423,737.8 ns</td><td>2,093,488.47 ns</td><td>543,672.31 ns</td><td>1.001</td><td>0.03</td><td>1781.2500</td><td>1156.2500</td><td>593.7500</td><td>14882.56 KB</td><td>1.000</td>
+</tr><tr><td>Incremental_Circuit</td><td>100000</td><td>1</td><td>111,313.8 ns</td><td>1,572.61 ns</td><td>408.40 ns</td><td>0.005</td><td>0.00</td><td>1.0986</td><td>-</td><td>-</td><td>9.08 KB</td><td>0.001</td>
+</tr><tr><td>Incremental_Circuit_FusedJoinProject</td><td>100000</td><td>1</td><td>675.3 ns</td><td>44.58 ns</td><td>11.58 ns</td><td>0.000</td><td>0.00</td><td>0.9136</td><td>0.0048</td><td>-</td><td>7.47 KB</td><td>0.001</td>
+</tr><tr><td>Naive_Recompute_All</td><td>100000</td><td>10</td><td>21,424,653.2 ns</td><td>621,316.45 ns</td><td>161,353.91 ns</td><td>1.000</td><td>0.01</td><td>1718.7500</td><td>1093.7500</td><td>531.2500</td><td>14882.57 KB</td><td>1.000</td>
+</tr><tr><td>Incremental_Circuit</td><td>100000</td><td>10</td><td>123,227.3 ns</td><td>5,096.11 ns</td><td>1,323.44 ns</td><td>0.006</td><td>0.00</td><td>6.1035</td><td>-</td><td>-</td><td>51.63 KB</td><td>0.003</td>
+</tr><tr><td>Incremental_Circuit_FusedJoinProject</td><td>100000</td><td>10</td><td>5,600.6 ns</td><td>249.59 ns</td><td>38.62 ns</td><td>0.000</td><td>0.00</td><td>1.8768</td><td>0.4654</td><td>-</td><td>15.38 KB</td><td>0.001</td>
+</tr><tr><td>Naive_Recompute_All</td><td>100000</td><td>100</td><td>21,379,488.0 ns</td><td>958,575.24 ns</td><td>148,340.58 ns</td><td>1.000</td><td>0.01</td><td>1468.7500</td><td>875.0000</td><td>281.2500</td><td>14881.58 KB</td><td>1.000</td>
+</tr><tr><td>Incremental_Circuit</td><td>100000</td><td>100</td><td>459,035.5 ns</td><td>12,033.00 ns</td><td>3,124.93 ns</td><td>0.021</td><td>0.00</td><td>145.9961</td><td>37.5977</td><td>-</td><td>1194.94 KB</td><td>0.080</td>
+</tr><tr><td>Incremental_Circuit_FusedJoinProject</td><td>100000</td><td>100</td><td>88,776.6 ns</td><td>12,606.22 ns</td><td>3,273.80 ns</td><td>0.004</td><td>0.00</td><td>18.0664</td><td>4.5166</td><td>-</td><td>148.38 KB</td><td>0.010</td>
+</tr><tr><td>Naive_Recompute_All</td><td>1000000</td><td>1</td><td>195,899,827.8 ns</td><td>22,073,270.80 ns</td><td>5,732,358.34 ns</td><td>1.001</td><td>0.04</td><td>11666.6667</td><td>5333.3333</td><td>333.3333</td><td>143662.85 KB</td><td>1.000</td>
+</tr><tr><td>Incremental_Circuit</td><td>1000000</td><td>1</td><td>115,233.6 ns</td><td>1,871.34 ns</td><td>485.98 ns</td><td>0.001</td><td>0.00</td><td>1.0986</td><td>-</td><td>-</td><td>9.08 KB</td><td>0.000</td>
+</tr><tr><td>Incremental_Circuit_FusedJoinProject</td><td>1000000</td><td>1</td><td>692.5 ns</td><td>55.19 ns</td><td>14.33 ns</td><td>0.000</td><td>0.00</td><td>0.9136</td><td>0.0048</td><td>-</td><td>7.47 KB</td><td>0.000</td>
+</tr><tr><td>Naive_Recompute_All</td><td>1000000</td><td>10</td><td>192,083,142.3 ns</td><td>11,602,439.51 ns</td><td>1,795,490.35 ns</td><td>1.000</td><td>0.01</td><td>11666.6667</td><td>5333.3333</td><td>333.3333</td><td>143662.85 KB</td><td>1.000</td>
+</tr><tr><td>Incremental_Circuit</td><td>1000000</td><td>10</td><td>134,014.2 ns</td><td>2,277.29 ns</td><td>591.41 ns</td><td>0.001</td><td>0.00</td><td>10.2539</td><td>0.7324</td><td>-</td><td>83.81 KB</td><td>0.001</td>
+</tr><tr><td>Incremental_Circuit_FusedJoinProject</td><td>1000000</td><td>10</td><td>7,227.3 ns</td><td>293.77 ns</td><td>76.29 ns</td><td>0.000</td><td>0.00</td><td>2.1133</td><td>0.5264</td><td>-</td><td>17.28 KB</td><td>0.000</td>
+</tr><tr><td>Naive_Recompute_All</td><td>1000000</td><td>100</td><td>218,911,497.2 ns</td><td>19,297,238.63 ns</td><td>5,011,431.60 ns</td><td>1.000</td><td>0.03</td><td>12333.3333</td><td>6000.0000</td><td>1333.3333</td><td>143665.74 KB</td><td>1.000</td>
+</tr><tr><td>Incremental_Circuit</td><td>1000000</td><td>100</td><td>780,471.9 ns</td><td>25,095.37 ns</td><td>6,517.19 ns</td><td>0.004</td><td>0.00</td><td>262.6953</td><td>97.6563</td><td>-</td><td>2152.25 KB</td><td>0.015</td>
+</tr><tr><td>Incremental_Circuit_FusedJoinProject</td><td>1000000</td><td>100</td><td>118,936.7 ns</td><td>2,739.15 ns</td><td>711.35 ns</td><td>0.001</td><td>0.00</td><td>22.4609</td><td>5.6152</td><td>-</td><td>183.72 KB</td><td>0.001</td>
+</tr></tbody></table>
+</body>
+</html>

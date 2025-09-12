@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>BenchmarkRun-joined-2025-09-11-16-24-41</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet v0.15.2, macOS Sequoia 15.6.1 (24G90) [Darwin 24.6.0]
+Apple M4 Max, 1 CPU, 16 logical and 16 physical cores
+.NET SDK 9.0.304
+  [Host] : .NET 9.0.8 (9.0.825.36511), Arm64 RyuJIT AdvSIMD DEBUG
+</code></pre>
+<pre><code>Job=QuickInProc  Toolchain=InProcessEmitToolchain  IterationCount=5  
+WarmupCount=1  
+</code></pre>
+
+<table>
+<thead><tr><th>Method              </th><th>DataSize</th><th>ChangeCount</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Ratio</th><th>RatioSD</th>
+</tr>
+</thead><tbody><tr><td>Naive_Recompute_All</td><td>100000</td><td>1</td><td>15.492 ms</td><td>0.5413 ms</td><td>0.1406 ms</td><td>1.00</td><td>0.01</td>
+</tr><tr><td>DBSP_Incremental_ApplyOnly</td><td>100000</td><td>1</td><td>15.010 ms</td><td>0.2815 ms</td><td>0.0731 ms</td><td>0.97</td><td>0.01</td>
+</tr><tr><td>DBSP_Incremental_Pipeline</td><td>100000</td><td>1</td><td>66.837 ms</td><td>1.8490 ms</td><td>0.4802 ms</td><td>4.31</td><td>0.05</td>
+</tr><tr><td>Naive_Recompute_All</td><td>100000</td><td>100</td><td>15.042 ms</td><td>3.2431 ms</td><td>0.8422 ms</td><td>1.00</td><td>0.07</td>
+</tr><tr><td>DBSP_Incremental_ApplyOnly</td><td>100000</td><td>100</td><td>16.924 ms</td><td>0.4406 ms</td><td>0.1144 ms</td><td>1.13</td><td>0.06</td>
+</tr><tr><td>DBSP_Incremental_Pipeline</td><td>100000</td><td>100</td><td>68.290 ms</td><td>2.8331 ms</td><td>0.4384 ms</td><td>4.55</td><td>0.24</td>
+</tr><tr><td>Naive_Recompute_All</td><td>300000</td><td>1</td><td>48.335 ms</td><td>12.3512 ms</td><td>1.9114 ms</td><td>1.00</td><td>0.05</td>
+</tr><tr><td>DBSP_Incremental_ApplyOnly</td><td>300000</td><td>1</td><td>7.372 ms</td><td>0.3312 ms</td><td>0.0860 ms</td><td>0.15</td><td>0.01</td>
+</tr><tr><td>DBSP_Incremental_Pipeline</td><td>300000</td><td>1</td><td>177.349 ms</td><td>12.3131 ms</td><td>3.1977 ms</td><td>3.67</td><td>0.15</td>
+</tr><tr><td>Naive_Recompute_All</td><td>300000</td><td>100</td><td>48.600 ms</td><td>5.6964 ms</td><td>1.4793 ms</td><td>1.00</td><td>0.04</td>
+</tr><tr><td>DBSP_Incremental_ApplyOnly</td><td>300000</td><td>100</td><td>56.379 ms</td><td>1.6255 ms</td><td>0.4221 ms</td><td>1.16</td><td>0.03</td>
+</tr><tr><td>DBSP_Incremental_Pipeline</td><td>300000</td><td>100</td><td>224.804 ms</td><td>6.1332 ms</td><td>0.9491 ms</td><td>4.63</td><td>0.14</td>
+</tr></tbody></table>
+</body>
+</html>

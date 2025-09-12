@@ -2,6 +2,15 @@
 
 Based on comprehensive analysis of the DBSP (Database Stream Processor) documentation, source code, and research materials, this document outlines a detailed implementation plan for creating a DBSP port in F#/.NET.
 
+## Recent Status (Sept 2025)
+
+- Storage layer: ZoneTree-based LSM-backed storage is implemented with temporal trace support and a hybrid (memory + spill-to-disk) mode. Key modules: `src/DBSP.Storage/LSMStorage.fs`, `src/DBSP.Storage/LSMTemporalTrace.fs`, `src/DBSP.Storage/Storage.Backends.fs`, `src/DBSP.Storage/TemporalStorage.fs`, `src/DBSP.Storage/Serialization.fs`.
+- Circuit integration: Added clock support and a `SnapshotOperator` in `src/DBSP.Circuit/Builder.fs` wired into the runtime (`src/DBSP.Circuit/Runtime.fs`) with periodic maintenance hooks (`MaintenanceEverySteps`, `MaintainBeforeLag`, `MaintainBucketSize`).
+- Operators: Temporal helpers available in `src/DBSP.Operators/TemporalOperators.fs` for snapshot and range queries over a temporal trace.
+- Benchmarks/scripts: Performance harness expanded (`test/DBSP.Tests.Performance`) and scripts updated to run non-interactively with tool restore (`scripts/run-benchmark-analysis.sh`, `test-regression.sh`).
+- Cleanup: Removed extraneous planning/result docs (Phase 5.3/6 plans and results, and the older bottleneck writeup). Orphaned F# source files not referenced by any `.fsproj` have been deleted to prevent drift and confusion.
+- Correction: The older bottleneck analysis mixed change-application with ZSet construction; subsequent benchmarking separates costs and validates optimizations using focused micro-benchmarks and circuit-level scenarios.
+
 ## Overview
 
 DBSP (Database Stream Processor) is a framework for incremental computation that efficiently processes changes to data rather than recomputing entire datasets. This F# implementation will provide:
