@@ -84,14 +84,15 @@ type StreamingAggregationWorkload() =
         let combined = ZSet.add baseZSet updateZSet
         
         // Group and aggregate (simplified - real DBSP would maintain incremental state)
-        combined.Inner
-        |> Seq.groupBy (fun (KeyValue((_, videoId, _, _), _)) -> videoId)
+        combined
+        |> ZSet.toSeq
+        |> Seq.groupBy (fun ((_, videoId, _, _), _) -> videoId)
         |> Seq.map (fun (videoId, items) ->
             let counts = 
                 items
-                |> Seq.groupBy (fun (KeyValue((_, _, interactionType, _), _)) -> interactionType)
+                |> Seq.groupBy (fun ((_, _, interactionType, _), _) -> interactionType)
                 |> Seq.map (fun (typ, items) -> 
-                    (typ, items |> Seq.sumBy (fun (KeyValue(_, weight)) -> weight)))
+                    (typ, items |> Seq.sumBy (fun (_, weight) -> weight)))
                 |> Map.ofSeq
             (videoId, counts))
         |> Seq.length
@@ -164,8 +165,9 @@ type CDCWorkload() =
         let result = ZSet.add baseZSet deltaZSet
         
         // Count non-zero weight entries
-        result.Inner
-        |> Seq.filter (fun (KeyValue(_, weight)) -> weight <> 0)
+        result
+        |> ZSet.toSeq
+        |> Seq.filter (fun (_, weight) -> weight <> 0)
         |> Seq.length
 
 /// Complex analytics pipeline similar to Feldera's e-commerce SQL demo

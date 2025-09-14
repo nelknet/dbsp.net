@@ -48,6 +48,7 @@ let main args =
         typeof<DataStructureComparisonBenchmarks.ZSetOperationBenchmarks>
         typeof<DataStructureComparisonBenchmarks.MemoryAllocationBenchmarks>
         typeof<DataStructureComparisonBenchmarks.CacheLocalityBenchmarks>
+        typeof<FastZSetMicroBenchmarks>
         typeof<AlgebraicDispatchBenchmarks.AlgebraicDispatchBenchmarks>
         typeof<AlgebraicDispatchBenchmarks.MemoryAllocationAnalysis>
         typeof<AlgebraicDispatchBenchmarks.StructVsRefTypeBenchmarks>

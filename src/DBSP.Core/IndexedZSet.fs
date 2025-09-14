@@ -54,25 +54,29 @@ module IndexedZSet =
 
     /// Create IndexedZSet from a ZSet using a key function (GROUP BY operation)
     let groupBy (keyFn: 'T -> 'K) (zset: ZSet<'T>) : IndexedZSet<'K, 'T> =
-        // O(N) grouping operation using HashMap.fold for efficiency
-        let grouped = 
-            ZSet.fold (fun acc value weight ->
-                let key = keyFn value
-                let currentZSet = HashMap.tryFind key acc |> Option.defaultValue (ZSet.empty<'T>)
-                let newZSet = ZSet.insert value weight currentZSet
-                HashMap.add key newZSet acc
-            ) HashMap.empty zset
-        { Index = grouped }
+        // Build per-key using ZSet builders to avoid repeated inserts
+        let dict = System.Collections.Generic.Dictionary<'K, ZSet.ZSetBuilder<'T>>()
+        ZSet.iter (fun value weight ->
+            let key = keyFn value
+            let ok, b = dict.TryGetValue key
+            let builder = if ok then b else let nb = ZSet.ZSetBuilder<'T>() in dict[key] <- nb; nb
+            builder.Add(value, weight)
+        ) zset
+        let idx =
+            dict
+            |> Seq.map (fun kv -> kv.Key, kv.Value.Build())
+            |> HashMap.ofSeq
+        { Index = idx }
 
     /// Create IndexedZSet from sequence of (key * value * weight) tuples
     let ofSeq (entries: seq<'K * 'V * int>) =
-        entries
-        |> Seq.fold (fun acc (key, value, weight) ->
-            let currentZSet = HashMap.tryFind key acc |> Option.defaultValue (ZSet.empty<'V>)
-            let newZSet = ZSet.insert value weight currentZSet
-            HashMap.add key newZSet acc
-        ) HashMap.empty
-        |> fun index -> { Index = index }
+        let dict = System.Collections.Generic.Dictionary<'K, ZSet.ZSetBuilder<'V>>()
+        for (key, value, weight) in entries do
+            let ok, b = dict.TryGetValue key
+            let builder = if ok then b else let nb = ZSet.ZSetBuilder<'V>() in dict[key] <- nb; nb
+            builder.Add(value, weight)
+        let index = dict |> Seq.map (fun kv -> kv.Key, kv.Value.Build()) |> HashMap.ofSeq
+        { Index = index }
 
     /// Convert to sequence of (key * value * weight) tuples
     let toSeq (indexed: IndexedZSet<'K, 'V>) =
@@ -84,20 +88,23 @@ module IndexedZSet =
 
     /// Create IndexedZSet from regular ZSet of tuples
     let fromZSet (zset: ZSet<'K * 'V>) : IndexedZSet<'K, 'V> =
-        ZSet.fold (fun acc (key, value) weight ->
-            let currentZSet = HashMap.tryFind key acc |> Option.defaultValue (ZSet.empty<'V>)
-            let newZSet = ZSet.insert value weight currentZSet
-            HashMap.add key newZSet acc
-        ) HashMap.empty zset
-        |> fun index -> { Index = index }
+        let dict = System.Collections.Generic.Dictionary<'K, ZSet.ZSetBuilder<'V>>()
+        ZSet.iter (fun (key, value) weight ->
+            let ok, b = dict.TryGetValue key
+            let builder = if ok then b else let nb = ZSet.ZSetBuilder<'V>() in dict[key] <- nb; nb
+            builder.Add(value, weight)
+        ) zset
+        let index = dict |> Seq.map (fun kv -> kv.Key, kv.Value.Build()) |> HashMap.ofSeq
+        { Index = index }
 
     /// Convert IndexedZSet back to regular ZSet of tuples
     let toZSet (indexed: IndexedZSet<'K, 'V>) : ZSet<'K * 'V> =
-        HashMap.fold (fun acc key zset ->
-            ZSet.fold (fun acc2 value weight ->
-                ZSet.insert (key, value) weight acc2
-            ) acc zset
-        ) (ZSet.empty<'K * 'V>) indexed.Index
+        // Use a single builder to avoid repeated allocations
+        ZSet.buildWith (fun b ->
+            HashMap.iter (fun key (zset: ZSet<'V>) ->
+                ZSet.iter (fun value weight -> if weight <> 0 then b.Add((key, value), weight)) zset
+            ) indexed.Index
+        )
 
 
     /// Filter IndexedZSet by key predicate
@@ -128,19 +135,21 @@ module IndexedZSet =
 
     /// High-performance join operation with aggressive inlining
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    let inline join (left: IndexedZSet<'K, 'V1>) (right: IndexedZSet<'K, 'V2>) : IndexedZSet<'K, 'V1 * 'V2> =
-        let joinedIndex = 
+    let join (left: IndexedZSet<'K, 'V1>) (right: IndexedZSet<'K, 'V2>) : IndexedZSet<'K, 'V1 * 'V2> =
+        // For each key present in both, build the product ZSet via builder to reduce overhead
+        let joinedIndex =
             HashMap.choose (fun key leftZSet ->
                 match HashMap.tryFind key right.Index with
                 | Some rightZSet ->
-                    // Cartesian product of the two ZSets for this key
-                    let product = 
-                        ZSet.fold (fun acc1 leftVal leftWeight ->
-                            ZSet.fold (fun acc2 rightVal rightWeight ->
-                                let combinedWeight = leftWeight * rightWeight
-                                ZSet.insert (leftVal, rightVal) combinedWeight acc2
-                            ) acc1 rightZSet
-                        ) (ZSet.empty<'V1 * 'V2>) leftZSet
+                    let product =
+                        ZSet.buildWith (fun b ->
+                            ZSet.iter (fun lval lw ->
+                                if lw <> 0 then
+                                    ZSet.iter (fun rval rw ->
+                                        if rw <> 0 then b.Add((lval, rval), lw * rw)
+                                    ) rightZSet
+                            ) leftZSet
+                        )
                     if product.IsEmpty then None else Some product
                 | None -> None
             ) left.Index
