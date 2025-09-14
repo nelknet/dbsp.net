@@ -672,10 +672,12 @@ module ZSet =
                 { zset with Fast = mem } |> normalizeAdaptiveInternal
 
     /// Builder for efficient ZSet construction
-    type ZSetBuilder<'K when 'K : comparison>() =
-        let pairs = System.Collections.Generic.List<'K * int>(128)
+    type ZSetBuilder<'K when 'K : comparison>(?capacity: int) =
+        let initialCap = defaultArg capacity 128
+        let pairs = System.Collections.Generic.List<'K * int>(initialCap)
         member _.Add(key: 'K, weight: int) = if weight <> 0 then pairs.Add((key, weight))
         member this.AddRange(ps: seq<'K * int>) = for (k,w) in ps do this.Add(k,w)
+        member _.Reserve(n: int) = if n > pairs.Capacity then pairs.Capacity <- n
         member _.Build() =
             let arr = pairs.ToArray()
             match selectedBackend with

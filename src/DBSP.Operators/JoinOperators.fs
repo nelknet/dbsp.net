@@ -41,6 +41,21 @@ type InnerJoinOperator<'K, 'V1, 'V2 when 'K: comparison and 'V1: comparison and 
         else
             innerDict[value] <- nw
     
+    // Hybrid dispatch controls: EWMA of delta sizes and hysteresis
+    let ewma (alpha: float) (prev: float) (sample: float) = alpha * sample + (1.0 - alpha) * prev
+    let alpha = 0.3
+    let mutable ewmaLeft = 0.0
+    let mutable ewmaRight = 0.0
+    let mutable useHashFastPath = true
+    let updateMode (leftCount: int) (rightCount: int) =
+        ewmaLeft <- ewma alpha ewmaLeft (float leftCount)
+        ewmaRight <- ewma alpha ewmaRight (float rightCount)
+        let avg = (ewmaLeft + ewmaRight) * 0.5
+        let lowThresh = 200.0
+        let highThresh = 800.0
+        if useHashFastPath && avg > highThresh then useHashFastPath <- false
+        elif (not useHashFastPath) && avg < lowThresh then useHashFastPath <- true
+    
     override _.EvalAsyncImpl leftDelta rightDelta = task {
         // Decide execution path
         let leftDeltaCount = ZSet.fold (fun s _ w -> if w <> 0 then s + 1 else s) 0 leftDelta
@@ -80,13 +95,22 @@ type InnerJoinOperator<'K, 'V1, 'V2 when 'K: comparison and 'V1: comparison and 
 
             // Build result per key using builders
             let builders = System.Collections.Generic.Dictionary<'K, ZSet.ZSetBuilder<'V1 * 'V2>>()
-            let inline getBuilder k = let ok, b = builders.TryGetValue k in if ok then b else let nb = ZSet.ZSetBuilder<'V1 * 'V2>() in builders[k] <- nb; nb
+            let getOrCreateBuilder (k: 'K) (reserve: int) =
+                let ok, b = builders.TryGetValue k
+                if ok then
+                    if reserve > 0 then b.Reserve(reserve)
+                    b
+                else
+                    let nb = ZSet.ZSetBuilder<'V1 * 'V2>(reserve)
+                    builders[k] <- nb
+                    nb
 
             // δR ⋈ S
             for KeyValue(k, lstL) in lgrp do
                 let ok, rstate = rightDict.TryGetValue k
                 if ok then
-                    let b = getBuilder k
+                    let reserve = lstL.Count * rstate.Count
+                    let b = getOrCreateBuilder k reserve
                     for (v1, lw) in lstL do
                         if lw <> 0 then
                             for KeyValue(v2, rw) in rstate do
@@ -96,7 +120,8 @@ type InnerJoinOperator<'K, 'V1, 'V2 when 'K: comparison and 'V1: comparison and 
             for KeyValue(k, lstR) in rgrp do
                 let ok, lstate = leftDict.TryGetValue k
                 if ok then
-                    let b = getBuilder k
+                    let reserve = lstR.Count * lstate.Count
+                    let b = getOrCreateBuilder k reserve
                     for (v2, rw) in lstR do
                         if rw <> 0 then
                             for KeyValue(v1, lw) in lstate do
@@ -106,7 +131,8 @@ type InnerJoinOperator<'K, 'V1, 'V2 when 'K: comparison and 'V1: comparison and 
             for KeyValue(k, lstL) in lgrp do
                 let ok, lstR = rgrp.TryGetValue k
                 if ok then
-                    let b = getBuilder k
+                    let reserve = lstL.Count * lstR.Count
+                    let b = getOrCreateBuilder k reserve
                     for (v1, lw) in lstL do
                         if lw <> 0 then
                             for (v2, rw) in lstR do
