@@ -22,11 +22,21 @@ type AggregateOperator<'K, 'V, 'Acc when 'K: comparison and 'V: comparison and '
         // Process changes incrementally
         let mutable updatedState = state
         
-        ZSet.fold (fun acc (key, value) weight ->
-            let currentAcc = HashMap.tryFind key acc |> Option.defaultValue initialAcc
-            let newAcc = updateFn currentAcc value weight
-            HashMap.add key newAcc acc
-        ) updatedState input |> fun newState -> updatedState <- newState
+        let backend = System.Environment.GetEnvironmentVariable("DBSP_BACKEND")
+        let useArranged = System.String.Equals(backend, "Adaptive", System.StringComparison.OrdinalIgnoreCase) && input.Count > 1000
+        if useArranged then
+            use _view = ZSet.arrangedView input
+            for ((key, value), weight) in ZSet.toSeq input do
+                if weight <> 0 then
+                    let currentAcc = HashMap.tryFind key updatedState |> Option.defaultValue initialAcc
+                    let newAcc = updateFn currentAcc value weight
+                    updatedState <- HashMap.add key newAcc updatedState
+        else
+            ZSet.fold (fun acc (key, value) weight ->
+                let currentAcc = HashMap.tryFind key acc |> Option.defaultValue initialAcc
+                let newAcc = updateFn currentAcc value weight
+                HashMap.add key newAcc acc
+            ) updatedState input |> fun newState -> updatedState <- newState
         
         state <- updatedState
         
@@ -64,14 +74,24 @@ type CountOperator<'K, 'V when 'K: comparison and 'V: comparison>(?name: string)
         // Update counts based on weight changes
         let mutable updatedCounts = counts
         
-        ZSet.fold (fun acc (key, _value) weight ->
-            let currentCount = HashMap.tryFind key acc |> Option.defaultValue 0L
-            let newCount = currentCount + int64 weight
-            if newCount = 0L then
-                HashMap.remove key acc  // Remove keys with zero count
-            else
-                HashMap.add key newCount acc
-        ) updatedCounts input |> fun newCounts -> updatedCounts <- newCounts
+        let backend = System.Environment.GetEnvironmentVariable("DBSP_BACKEND")
+        let useArranged = System.String.Equals(backend, "Adaptive", System.StringComparison.OrdinalIgnoreCase) && input.Count > 1000
+        if useArranged then
+            use _view = ZSet.arrangedView input
+            for ((key, _value), weight) in ZSet.toSeq input do
+                if weight <> 0 then
+                    let currentCount = HashMap.tryFind key updatedCounts |> Option.defaultValue 0L
+                    let newCount = currentCount + int64 weight
+                    updatedCounts <- if newCount = 0L then HashMap.remove key updatedCounts else HashMap.add key newCount updatedCounts
+        else
+            ZSet.fold (fun acc (key, _value) weight ->
+                let currentCount = HashMap.tryFind key acc |> Option.defaultValue 0L
+                let newCount = currentCount + int64 weight
+                if newCount = 0L then
+                    HashMap.remove key acc  // Remove keys with zero count
+                else
+                    HashMap.add key newCount acc
+            ) updatedCounts input |> fun newCounts -> updatedCounts <- newCounts
         
         counts <- updatedCounts
         
