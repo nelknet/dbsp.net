@@ -171,8 +171,15 @@ type GroupByOperator<'T, 'K when 'T: comparison and 'K: comparison>(keyFn: 'T ->
     inherit BaseUnaryOperator<ZSet<'T>, IndexedZSet<'K, 'T>>(defaultArg name "GroupBy")
     
     override _.EvalAsyncImpl(input: ZSet<'T>) = task {
-        // Use the IndexedZSet groupBy function for efficient grouping
-        let result = IndexedZSet.groupBy keyFn input
+        // Use arranged view when Adaptive and input is large to improve scan locality
+        let backend = System.Environment.GetEnvironmentVariable("DBSP_BACKEND")
+        let useArranged = System.String.Equals(backend, "Adaptive", System.StringComparison.OrdinalIgnoreCase) && input.Count > 1000
+        let result =
+            if useArranged then
+                use _view = ZSet.arrangedView input
+                IndexedZSet.groupBy keyFn input
+            else
+                IndexedZSet.groupBy keyFn input
         return result
     }
 

@@ -7,6 +7,7 @@ open DBSP.Core.ZSet
 open DBSP.Core.IndexedZSet
 open DBSP.Operators.Interfaces
 open FSharp.Data.Adaptive
+open System.Buffers
 
 /// Inner join operator maintaining incremental state for both inputs
 /// Implements the mathematical join semantics for incremental computation
@@ -111,10 +112,20 @@ type InnerJoinOperator<'K, 'V1, 'V2 when 'K: comparison and 'V1: comparison and 
                 if ok then
                     let reserve = lstL.Count * rstate.Count
                     let b = getOrCreateBuilder k reserve
-                    for (v1, lw) in lstL do
-                        if lw <> 0 then
-                            for KeyValue(v2, rw) in rstate do
-                                if rw <> 0 then b.Add((v1, v2), lw * rw)
+                    // Enumerate rstate into a contiguous array for cache-friendly loops
+                    let rcoll = (rstate :> System.Collections.Generic.ICollection<System.Collections.Generic.KeyValuePair<'V2,int>>)
+                    let rarr = ArrayPool<System.Collections.Generic.KeyValuePair<'V2,int>>.Shared.Rent(rcoll.Count)
+                    try
+                        rcoll.CopyTo(rarr, 0)
+                        for i = 0 to lstL.Count - 1 do
+                            let (v1, lw) = lstL.[i]
+                            if lw <> 0 then
+                                for j = 0 to rcoll.Count - 1 do
+                                    let kv = rarr.[j]
+                                    let rw = kv.Value
+                                    if rw <> 0 then b.Add((v1, kv.Key), lw * rw)
+                    finally
+                        ArrayPool<System.Collections.Generic.KeyValuePair<'V2,int>>.Shared.Return(rarr, false)
 
             // R ⋈ δS
             for KeyValue(k, lstR) in rgrp do
@@ -122,10 +133,19 @@ type InnerJoinOperator<'K, 'V1, 'V2 when 'K: comparison and 'V1: comparison and 
                 if ok then
                     let reserve = lstR.Count * lstate.Count
                     let b = getOrCreateBuilder k reserve
-                    for (v2, rw) in lstR do
-                        if rw <> 0 then
-                            for KeyValue(v1, lw) in lstate do
-                                if lw <> 0 then b.Add((v1, v2), lw * rw)
+                    let lcoll = (lstate :> System.Collections.Generic.ICollection<System.Collections.Generic.KeyValuePair<'V1,int>>)
+                    let larr = ArrayPool<System.Collections.Generic.KeyValuePair<'V1,int>>.Shared.Rent(lcoll.Count)
+                    try
+                        lcoll.CopyTo(larr, 0)
+                        for i = 0 to lstR.Count - 1 do
+                            let (v2, rw) = lstR.[i]
+                            if rw <> 0 then
+                                for j = 0 to lcoll.Count - 1 do
+                                    let kv = larr.[j]
+                                    let lw = kv.Value
+                                    if lw <> 0 then b.Add((kv.Key, v2), lw * rw)
+                    finally
+                        ArrayPool<System.Collections.Generic.KeyValuePair<'V1,int>>.Shared.Return(larr, false)
 
             // δR ⋈ δS
             for KeyValue(k, lstL) in lgrp do
