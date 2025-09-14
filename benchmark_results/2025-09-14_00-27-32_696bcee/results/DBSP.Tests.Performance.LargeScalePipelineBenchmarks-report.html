@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>DBSP.Tests.Performance.LargeScalePipelineBenchmarks-20250913-202741</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet v0.15.2, macOS Sequoia 15.6.1 (24G90) [Darwin 24.6.0]
+Apple M4 Max, 1 CPU, 16 logical and 16 physical cores
+.NET SDK 9.0.304
+  [Host]   : .NET 9.0.8 (9.0.825.36511), Arm64 RyuJIT AdvSIMD DEBUG
+  ShortRun : .NET 9.0.8 (9.0.825.36511), Arm64 RyuJIT AdvSIMD
+</code></pre>
+<pre><code></code></pre>
+
+<table>
+<thead><tr><th>Method             </th><th>Job  </th><th>Toolchain       </th><th>IterationCount</th><th>LaunchCount</th><th>WarmupCount</th><th>DataSize</th><th>ChangeCount</th><th>Mean</th><th>Error</th><th>StdDev</th>
+</tr>
+</thead><tbody><tr><td>DBSP_Incremental_Pipeline</td><td>QuickInProc</td><td>InProcessEmitToolchain</td><td>5</td><td>Default</td><td>1</td><td>100000</td><td>1</td><td>88.29 ms</td><td>6.498 ms</td><td>1.687 ms</td>
+</tr><tr><td>DBSP_Incremental_Pipeline</td><td>ShortRun</td><td>Default</td><td>3</td><td>1</td><td>3</td><td>100000</td><td>1</td><td>86.29 ms</td><td>5.208 ms</td><td>0.285 ms</td>
+</tr><tr><td>DBSP_Incremental_Pipeline</td><td>QuickInProc</td><td>InProcessEmitToolchain</td><td>5</td><td>Default</td><td>1</td><td>100000</td><td>100</td><td>83.23 ms</td><td>3.951 ms</td><td>1.026 ms</td>
+</tr><tr><td>DBSP_Incremental_Pipeline</td><td>ShortRun</td><td>Default</td><td>3</td><td>1</td><td>3</td><td>100000</td><td>100</td><td>86.50 ms</td><td>14.616 ms</td><td>0.801 ms</td>
+</tr><tr><td>DBSP_Incremental_Pipeline</td><td>QuickInProc</td><td>InProcessEmitToolchain</td><td>5</td><td>Default</td><td>1</td><td>300000</td><td>1</td><td>256.12 ms</td><td>18.679 ms</td><td>2.891 ms</td>
+</tr><tr><td>DBSP_Incremental_Pipeline</td><td>ShortRun</td><td>Default</td><td>3</td><td>1</td><td>3</td><td>300000</td><td>1</td><td>268.13 ms</td><td>127.462 ms</td><td>6.987 ms</td>
+</tr><tr><td>DBSP_Incremental_Pipeline</td><td>QuickInProc</td><td>InProcessEmitToolchain</td><td>5</td><td>Default</td><td>1</td><td>300000</td><td>100</td><td>287.54 ms</td><td>36.240 ms</td><td>9.412 ms</td>
+</tr><tr><td>DBSP_Incremental_Pipeline</td><td>ShortRun</td><td>Default</td><td>3</td><td>1</td><td>3</td><td>300000</td><td>100</td><td>312.47 ms</td><td>116.660 ms</td><td>6.395 ms</td>
+</tr></tbody></table>
+</body>
+</html>
