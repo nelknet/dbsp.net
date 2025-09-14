@@ -182,34 +182,50 @@ type JoinMapOperator<'K, 'V1, 'V2, 'Out when 'K: comparison and 'V1: comparison
                     items.Add((item, weight))
             ) rightDelta
             
-            // Compute join with integrated mapping
+            // Group deltas by key to reduce lookups
+            let lgrp = System.Collections.Generic.Dictionary<'K, ResizeArray<'V1 * int>>()
+            ZSet.iter (fun item weight ->
+                if weight <> 0 then
+                    let k = joinKeyLeft item
+                    let ok, lst = lgrp.TryGetValue k
+                    let l = if ok then lst else let nl = ResizeArray() in lgrp[k] <- nl; nl
+                    l.Add((item, weight))
+            ) leftDelta
+            let rgrp = System.Collections.Generic.Dictionary<'K, ResizeArray<'V2 * int>>()
+            ZSet.iter (fun item weight ->
+                if weight <> 0 then
+                    let k = joinKeyRight item
+                    let ok, lst = rgrp.TryGetValue k
+                    let l = if ok then lst else let nl = ResizeArray() in rgrp[k] <- nl; nl
+                    l.Add((item, weight))
+            ) rightDelta
+
+            // Compute join with integrated mapping using cache-friendly loops
             let result = ZSet.buildWith (fun builder ->
-                // Process new left items against all right
-                ZSet.iter (fun leftItem leftWeight ->
-                    if leftWeight <> 0 then
-                        let key = joinKeyLeft leftItem
-                        match FSharp.Data.Adaptive.HashMap.tryFind key rightState with
-                        | Some rightItems ->
-                            for (rightItem, rightWeight) in rightItems do
-                                if rightWeight <> 0 then
-                                    let result = mapResult leftItem rightItem
-                                    builder.Add(result, leftWeight * rightWeight)
-                        | None -> ()
-                ) leftDelta
-                
-                // Process new right items against existing left (avoiding duplicates)
-                ZSet.iter (fun rightItem rightWeight ->
-                    if rightWeight <> 0 then
-                        let key = joinKeyRight rightItem
-                        match FSharp.Data.Adaptive.HashMap.tryFind key leftState with
-                        | Some leftItems ->
-                            for (leftItem, leftWeight) in leftItems do
-                                // Skip items from current delta (already processed)
-                                if (not (ZSet.containsKey leftItem leftDelta)) && leftWeight <> 0 then
-                                    let result = mapResult leftItem rightItem
-                                    builder.Add(result, leftWeight * rightWeight)
-                        | None -> ()
-                ) rightDelta
+                // δL ⋈ S
+                for KeyValue(k, lstL) in lgrp do
+                    match FSharp.Data.Adaptive.HashMap.tryFind k rightState with
+                    | Some rstate when rstate.Count > 0 ->
+                        let rarr = rstate.ToArray()
+                        for i = 0 to lstL.Count - 1 do
+                            let (lv, lw) = lstL.[i]
+                            if lw <> 0 then
+                                for j = 0 to rarr.Length - 1 do
+                                    let (rv, rw) = rarr.[j]
+                                    if rw <> 0 then builder.Add(mapResult lv rv, lw * rw)
+                    | _ -> ()
+                // S ⋈ δR (avoid δL cross)
+                for KeyValue(k, lstR) in rgrp do
+                    match FSharp.Data.Adaptive.HashMap.tryFind k leftState with
+                    | Some lstate when lstate.Count > 0 ->
+                        let larr = lstate.ToArray()
+                        for i = 0 to lstR.Count - 1 do
+                            let (rv, rw) = lstR.[i]
+                            if rw <> 0 then
+                                for j = 0 to larr.Length - 1 do
+                                    let (lv, lw) = larr.[j]
+                                    if lw <> 0 then builder.Add(mapResult lv rv, lw * rw)
+                    | _ -> ()
             )
             Task.FromResult(result)
 
