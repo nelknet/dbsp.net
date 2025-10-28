@@ -6,6 +6,27 @@
 [![F#](https://img.shields.io/badge/F%23-8.0-378BBA)](https://fsharp.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](./test-regression.sh)
+[![Status](https://img.shields.io/badge/status-alpha-orange)](https://github.com/Nelknet/dbsp.net)
+
+> **⚠️ ALPHA QUALITY SOFTWARE - PRE-PRODUCTION**
+>
+> DBSP.NET is currently in **alpha stage** and under active development. While the core functionality is implemented and tested, this software is **not yet production-ready**. APIs may change, and there may be bugs or performance issues. Use in production environments at your own risk.
+>
+> **Current Status:**
+> - ✅ Core algebraic framework and data structures complete
+> - ✅ Comprehensive operator suite implemented
+> - ✅ Single and multi-threaded execution working
+> - ✅ Persistent storage backend functional
+> - 🚧 Fault tolerance and checkpointing in progress
+> - 📋 SQL frontend, distributed execution, and production features planned
+>
+> **Recommended Use Cases:**
+> - Research and experimentation
+> - Prototype development
+> - Learning incremental computation concepts
+> - Contributing to the project
+>
+> For production workloads, consider the mature [Feldera](https://github.com/feldera/feldera) Rust implementation.
 
 ## Table of Contents
 
