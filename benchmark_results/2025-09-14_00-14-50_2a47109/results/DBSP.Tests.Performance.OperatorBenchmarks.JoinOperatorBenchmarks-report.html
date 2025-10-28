@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>DBSP.Tests.Performance.OperatorBenchmarks.JoinOperatorBenchmarks-20250913-201459</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet v0.15.2, macOS Sequoia 15.6.1 (24G90) [Darwin 24.6.0]
+Apple M4 Max, 1 CPU, 16 logical and 16 physical cores
+.NET SDK 9.0.304
+  [Host]   : .NET 9.0.8 (9.0.825.36511), Arm64 RyuJIT AdvSIMD DEBUG
+  ShortRun : .NET 9.0.8 (9.0.825.36511), Arm64 RyuJIT AdvSIMD
+</code></pre>
+<pre><code></code></pre>
+
+<table>
+<thead><tr><th>Method         </th><th>Job</th><th>Toolchain       </th><th>IterationCount</th><th>LaunchCount</th><th>WarmupCount</th><th>SetSize</th><th>Mean </th><th>Error </th><th>StdDev</th><th>StdErr</th><th>Min  </th><th>Max  </th><th>Q1   </th><th>Q3   </th><th>Median</th><th>Op/s</th><th>Gen0</th><th>Gen1</th><th>Gen2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>InnerJoin_Incremental</td><td>InProc</td><td>InProcessEmitToolchain</td><td>Default</td><td>Default</td><td>Default</td><td>100</td><td>446.9 &mu;s</td><td>3.65 &mu;s</td><td>3.41 &mu;s</td><td>0.88 &mu;s</td><td>441.4 &mu;s</td><td>454.2 &mu;s</td><td>444.0 &mu;s</td><td>448.8 &mu;s</td><td>447.1 &mu;s</td><td>2,237.88</td><td>160.1563</td><td>50.2930</td><td>-</td><td>1.28 MB</td>
+</tr><tr><td>InnerJoin_Incremental</td><td>ShortRun</td><td>Default</td><td>3</td><td>1</td><td>3</td><td>100</td><td>438.7 &mu;s</td><td>30.37 &mu;s</td><td>1.66 &mu;s</td><td>0.96 &mu;s</td><td>436.8 &mu;s</td><td>439.9 &mu;s</td><td>438.1 &mu;s</td><td>439.6 &mu;s</td><td>439.4 &mu;s</td><td>2,279.50</td><td>160.1563</td><td>54.1992</td><td>-</td><td>1.28 MB</td>
+</tr><tr><td>InnerJoin_Incremental</td><td>InProc</td><td>InProcessEmitToolchain</td><td>Default</td><td>Default</td><td>Default</td><td>1000</td><td>7,712.5 &mu;s</td><td>45.02 &mu;s</td><td>39.91 &mu;s</td><td>10.67 &mu;s</td><td>7,645.6 &mu;s</td><td>7,788.4 &mu;s</td><td>7,694.5 &mu;s</td><td>7,736.2 &mu;s</td><td>7,717.2 &mu;s</td><td>129.66</td><td>1757.8125</td><td>484.3750</td><td>179.6875</td><td>14.06 MB</td>
+</tr><tr><td>InnerJoin_Incremental</td><td>ShortRun</td><td>Default</td><td>3</td><td>1</td><td>3</td><td>1000</td><td>7,546.1 &mu;s</td><td>773.97 &mu;s</td><td>42.42 &mu;s</td><td>24.49 &mu;s</td><td>7,497.3 &mu;s</td><td>7,573.8 &mu;s</td><td>7,532.2 &mu;s</td><td>7,570.5 &mu;s</td><td>7,567.2 &mu;s</td><td>132.52</td><td>1765.6250</td><td>523.4375</td><td>203.1250</td><td>14.09 MB</td>
+</tr><tr><td>InnerJoin_Incremental</td><td>InProc</td><td>InProcessEmitToolchain</td><td>Default</td><td>Default</td><td>Default</td><td>5000</td><td>50,346.1 &mu;s</td><td>363.01 &mu;s</td><td>321.80 &mu;s</td><td>86.00 &mu;s</td><td>49,676.4 &mu;s</td><td>51,037.9 &mu;s</td><td>50,222.5 &mu;s</td><td>50,540.7 &mu;s</td><td>50,358.5 &mu;s</td><td>19.86</td><td>10000.0000</td><td>2562.5000</td><td>875.0000</td><td>72.92 MB</td>
+</tr><tr><td>InnerJoin_Incremental</td><td>ShortRun</td><td>Default</td><td>3</td><td>1</td><td>3</td><td>5000</td><td>48,536.4 &mu;s</td><td>13,290.45 &mu;s</td><td>728.49 &mu;s</td><td>420.60 &mu;s</td><td>48,110.4 &mu;s</td><td>49,377.6 &mu;s</td><td>48,115.9 &mu;s</td><td>48,749.5 &mu;s</td><td>48,121.4 &mu;s</td><td>20.60</td><td>9818.1818</td><td>2272.7273</td><td>727.2727</td><td>72.99 MB</td>
+</tr></tbody></table>
+</body>
+</html>

@@ -59,10 +59,8 @@ type CoreBottleneckBenchmarks() =
         let deltaZSet = ZSet.ofSeq (Seq.append deletes inserts)
         let result = ZSet.add baseZSet deltaZSet
         
-        // Count results  
-        result.Inner 
-        |> HashMap.filter (fun _ weight -> weight <> 0)
-        |> HashMap.count
+        // Count results (non-zero weights)
+        result |> ZSet.toSeq |> Seq.length
     
     [<Benchmark>]
     member this.HashMap_DirectOperations() =

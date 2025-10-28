@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="BatchTrace.fs" />
     <Compile Include="Algebra.fs" />
     <Compile Include="ZSet.fs" />
     <Compile Include="IndexedZSet.fs" />

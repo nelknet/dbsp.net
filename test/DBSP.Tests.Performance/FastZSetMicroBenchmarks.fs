@@ -25,10 +25,9 @@ type FastZSetMicroBenchmarks() =
 
     [<Benchmark(Baseline=true)>]
     member this.ToSeq_Enumerate() =
-        // Enumerate all entries using toSeq
         let mutable s = 0
         for (k,w) in ZSet.toSeq this.zs do
-            s <- s + (if w <> 0 then 1 else 0)
+            if w <> 0 then s <- s + 1
         s
 
     [<Benchmark>]
@@ -51,8 +50,7 @@ type FastZSetMicroBenchmarks() =
 
     [<Benchmark>]
     member this.UnionMany_Deltas() =
-        // Build many small delta ZSets and union them into a result
         let deltas =
             [| for i in 0 .. this.Delta - 1 -> ZSet.ofList [ (i % this.Size, -1); ((i + 1) % this.Size, 1) ] |]
-        Array.fold ZSet.union this.zs deltas
+        ZSet.unionMany (deltas :> seq<_>)
 

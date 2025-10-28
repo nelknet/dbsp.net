@@ -6,8 +6,6 @@ open BenchmarkDotNet.Jobs
 open DBSP.Core.ZSet
 
 /// End-to-end comparison: naive full recompute vs incremental DBSP on large data
-[<SimpleJob(RuntimeMoniker.Net90)>]
-[<InProcess>]
 [<MemoryDiagnoser>]
 // Synthetic record matching typical map/filter/join pipelines
 type Order = {
@@ -22,11 +20,17 @@ type Order = {
 type LargeScalePipelineBenchmarks() =
     
     // Parameters aligned with user scenario
-    [<Params(100000, 1000000)>]
+    member this.DataSizes =
+        let quick = System.String.Equals(System.Environment.GetEnvironmentVariable("DBSP_QUICK_BENCH"), "1", System.StringComparison.OrdinalIgnoreCase)
+        if quick then [| 100000; 300000 |] else [| 100000; 1000000 |]
+    [<ParamsSource("DataSizes")>]
     member val DataSize = 0 with get, set
 
     // Small change sizes to probe crossover point
-    [<Params(1, 10, 100, 1000)>]
+    member this.ChangeCounts =
+        let quick = System.String.Equals(System.Environment.GetEnvironmentVariable("DBSP_QUICK_BENCH"), "1", System.StringComparison.OrdinalIgnoreCase)
+        if quick then [| 1; 100 |] else [| 1; 10; 100; 1000 |]
+    [<ParamsSource("ChangeCounts")>]
     member val ChangeCount = 0 with get, set
 
     // Generated data and mutable state for incremental scenario
