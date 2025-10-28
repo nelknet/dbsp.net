@@ -18,7 +18,6 @@
 > - ✅ Single and multi-threaded execution working
 > - ✅ Persistent storage backend functional
 > - 🚧 Fault tolerance and checkpointing in progress
-> - 📋 SQL frontend, distributed execution, and production features planned
 >
 > **Recommended Use Cases:**
 > - Research and experimentation
