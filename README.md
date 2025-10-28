@@ -64,59 +64,6 @@ DBSP (Database Stream Processor) is a computational framework that:
 - **Performance**: Native .NET performance with zero-allocation paths and SIMD optimizations
 - **Cross-Platform**: Runs on Windows, Linux, and macOS via .NET 9.0
 
-## Key Features
-
-### ✅ Implemented (Phases 1-5.3)
-
-#### **Core Algebraic Framework**
-- Algebraic type system (Semigroup, Monoid, Group, Ring)
-- Z-sets with weight-based semantics for insertions/deletions
-- Indexed Z-sets for efficient grouping and joins
-- Stream abstractions with temporal semantics
-
-#### **Comprehensive Operator Suite**
-- **Linear Operators**: Map, Filter, FlatMap, Neg
-- **Bilinear Operators**: Join (Hash/Merge/Nested Loop), Product
-- **Aggregation**: Sum, Count, Average, Min, Max, GroupBy
-- **Set Operations**: Union, Intersection, Difference
-- **Temporal**: Delay, Differentiate, Integrate
-- **Advanced**: Antijoin, Semijoin, Outer joins
-
-#### **High-Performance Runtime**
-- Single and multi-threaded circuit execution
-- Parallel execution with configurable worker pools
-- Operator fusion and circuit optimization
-- Zero-allocation paths using Span<'T> and Memory<'T>
-- Thread-local storage for NUMA optimization
-
-#### **Persistent Storage Backend**
-- LSM tree-based storage using ZoneTree
-- Adaptive memory spilling with GC pressure monitoring
-- Temporal trace storage with multi-level spine structure
-- Pluggable serialization (MessagePack, MemoryPack)
-- Per-worker storage isolation for linear scalability
-
-#### **Comprehensive Testing**
-- 200+ unit tests with 95%+ code coverage
-- Property-based testing with FsCheck
-- Performance benchmarks with BenchmarkDotNet
-- Regression testing infrastructure
-
-### 🚧 In Progress (Phase 5.4)
-
-- Checkpointing and fault tolerance
-- WAL (Write-Ahead Logging) integration
-- Window operators (time-based, row-based)
-- Exactly-once processing guarantees
-
-### 📋 Planned (Phase 6+)
-
-- SQL frontend with Apache Calcite integration
-- Distributed execution across multiple nodes
-- Streaming connectors (Kafka, EventHub, etc.)
-- Web UI for monitoring and management
-- Language bindings (C#, Python)
-
 ## Mathematical Foundation
 
 DBSP.NET implements a rigorous mathematical framework based on algebraic structures:
@@ -241,22 +188,6 @@ let circuit =
         .Output("adult_count")
         .Build()
 ```
-
-## Implementation Status
-
-### Phase Completion
-
-| Phase | Description | Status | Coverage |
-|-------|-------------|--------|----------|
-| **Phase 1** | Core Foundations | ✅ Complete | 100% |
-| **Phase 2** | Basic Operators | ✅ Complete | 100% |
-| **Phase 3** | Circuit Runtime | ✅ Complete | 100% |
-| **Phase 4** | Advanced Operators | ✅ Complete | 100% |
-| **Phase 5.1** | Data Structure Optimization | ✅ Complete | 100% |
-| **Phase 5.2** | Parallel Execution | ✅ Complete | 100% |
-| **Phase 5.3** | Persistent Storage | ✅ Complete | 100% |
-| **Phase 5.4** | Fault Tolerance | 🚧 In Progress | 20% |
-| **Phase 6** | Production Features | 📋 Planned | 0% |
 
 ### Performance Metrics
 
@@ -682,23 +613,6 @@ dotnet fsdocs build --clean
 - Write tests for new features
 - Ensure benchmarks for performance-critical code
 
-## Roadmap
-
-### Near Term (Q1 2025)
-- ✅ Phase 5.3: Persistent Storage
-- 🚧 Phase 5.4: Fault Tolerance
-- 📋 SQL Frontend (basic)
-
-### Medium Term (Q2-Q3 2025)
-- 📋 Distributed execution
-- 📋 Streaming connectors
-- 📋 Web monitoring UI
-
-### Long Term (Q4 2025+)
-- 📋 Cloud-native deployment
-- 📋 Language bindings
-- 📋 Advanced SQL features
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -738,40 +652,9 @@ Example performance (modern ARM64 laptop, .NET 9 Release):
 - The F# community for excellent functional programming tools
 - Contributors and early adopters
 
-## Contact
-
-- **Issue Tracker**: [GitHub Issues](https://github.com/yourusername/dbsp.net/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/dbsp.net/discussions)
-- **Email**: dbsp-net@example.com
-
 ---
 
 <div align="center">
 Built with ❤️ using F# and .NET
 </div>
-- Persistent temporal storage in a circuit (LSM + snapshots)
-
-```
-open DBSP.Storage
-open DBSP.Circuit
-
-let cfg = { DataPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "dbsp_quickstart")
-            MaxMemoryBytes = 1_000_000_000L; CompactionThreshold = 64; WriteBufferSize = 16384; BlockCacheSize = 1_000_000L; SpillThreshold = 0.8 }
-use trace = new LSMTemporalTrace<int,string>(cfg, SerializerFactory.CreateMessagePack<struct (int64 * int * string)>())
-
-// Ingest batches at times 1 and 3
-trace.InsertBatch(1L, [ (1, "a", 1L); (2, "b", 1L) ]) |> Async.AwaitTask |> Async.RunSynchronously
-trace.InsertBatch(3L, [ (2, "b", -1L); (3, "c", 2L) ]) |> Async.AwaitTask |> Async.RunSynchronously
-
-// Build circuit
-let (circuit, snapshotOut) =
-    RootCircuit.Build(fun b ->
-        let clock = b.AddClock("clock")
-        let out = b.AddSnapshot("snapshot", trace :> ITemporalTrace<int,string>, clock)
-        out)
-
-let runtime = CircuitRuntimeModule.create circuit { RuntimeConfig.Default with MaintenanceEverySteps = 0L }
-runtime.Start() |> ignore
-runtime.ExecuteStepAsync() |> Async.AwaitTask |> Async.RunSynchronously |> ignore // t=1
-let t1 = snapshotOut.Value // contains entries up to time 1
 ```
