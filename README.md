@@ -597,6 +597,37 @@ Incremental total : 0 ms
 
 Scaling the scenario (5 M baseline orders, 100 changes per step) yields seconds vs milliseconds as shown in `examples/DBSP.Examples/Program.fs`. Both demos showcase the same principle: only the changed records drive the amount of work DBSP performs.
 
+### Performance Snapshot (Apple M4 Max · October 30, 2025)
+
+Command:
+
+```
+dotnet run --project examples/DBSP.Examples/DBSP.Examples.fsproj -c Release
+```
+
+Results:
+
+| Scenario | Workload | Elapsed Time | Throughput Gain |
+|----------|----------|--------------|-----------------|
+| Naive recomputation | 5 M orders, 60 steps, 100 changes/step | 2620 ms | 1× (baseline) |
+| DBSP incremental | same dataset and deltas | **7 ms** | **374× faster** |
+
+The tutorial prints both the naive and incremental top-N customer counts for transparency. Re-run the command above after significant changes to confirm the gap remains.
+
+### Benchmarking & Regression Workflow
+
+- Quick regression guard (recommended before commits):
+  - `./test-regression.sh --quick`
+- Full BenchmarkDotNet run with analysis (Unix/macOS):
+  - `./scripts/run-benchmark-analysis.sh`
+- Windows/PowerShell equivalent:
+  - `pwsh scripts/run-benchmark-analysis.ps1`
+- Manual BenchmarkDotNet runs:
+  - `dotnet run -c Release --project test/DBSP.Tests.Performance`
+  - `dotnet run -c Release --project test/DBSP.Tests.Performance -- --filter "*ZSet*" --job short`
+
+Benchmark artifacts land in `benchmark_results/` and summaries in `benchmark_analysis/`. Use `dotnet bdna analyze --input benchmark_results --output benchmark_analysis` to audit historical runs or adjust tolerances.
+
 ### Design Documents
 
 - [Architecture Overview](docs/design/architecture.md)
@@ -626,6 +657,13 @@ Located in `source_code_references/`:
 - [Implementing Z-sets](source_code_references/Implementing%20Z-sets.md)
 - [Indexed Z-sets](source_code_references/Indexed%20Z-sets.md)
 - [Incremental Database Computations](source_code_references/Incremental%20Database%20Computations%20-%20Part%201.md)
+
+## Future Work
+
+- **Specialized trace data structures** (`src/DBSP.Core/ZSet.fs`): replace the adaptive `HashMap`-backed Z-set with cache-friendly traces and pooling to cut allocations and unlock true change-proportional performance.
+- **Operator fusion and scheduling** (`src/DBSP.Circuit/Builder.fs`, `src/DBSP.Circuit/Runtime.fs`): introduce circuit-level optimizations, batching and parallel stepping so that composite pipelines avoid redundant materialization.
+- **Storage backends** (`src/DBSP.Storage/Storage.Backends.fs`): convert the async state machines to static/resumable implementations and add adaptive compaction to remove the current warning-level fallbacks.
+- **Benchmark automation** (`scripts/run-benchmark-analysis.sh`, `test/DBSP.Tests.Performance`): tighten tolerances and expand coverage to joins and storage workloads so performance regressions are caught earlier.
 
 ## Contributing
 
