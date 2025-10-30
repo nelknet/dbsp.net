@@ -556,6 +556,41 @@ Full API documentation is available at [docs/api/](docs/api/index.html) (generat
 
 > Live code samples for all tutorials reside in `examples/DBSP.Tutorials`; run them with `dotnet run --project examples/DBSP.Tutorials -- --sample <name>`.
 
+### Change-Proportional Updates (Why DBSP.NET Matters)
+
+DBSP.NET circuits update results **in time proportional to the size of the change**, not the size of the entire data set. A small delta keeps work small even if the underlying collection has millions of rows.
+
+```fsharp
+open DBSP.Core.ZSet
+open DBSP.Operators.TemporalOperators
+
+type Order = { Id: int; CustomerId: int }
+
+// Naive: rescan every order on each change (O(|orders|) per step)
+let recomputeAll (orders: Order list) =
+    orders |> Seq.countBy (fun o -> o.CustomerId) |> Map.ofSeq
+
+// DBSP: apply only the delta (O(|delta|) per step)
+let integrate = IntegrateOperator<int>()
+let applyDelta (delta: ZSet<int>) =
+    integrate.EvalAsyncImpl(delta).Result
+```
+
+The tutorials project contains a runnable comparison:
+
+```
+dotnet run --project examples/DBSP.Tutorials -- --sample performance --iterations 3 --changes 200
+```
+
+Example output on a laptop:
+
+```
+Naive total       : 2 ms
+Incremental total : 0 ms
+```
+
+Scaling the scenario (5 M baseline orders, 100 changes per step) yields seconds vs milliseconds as shown in `examples/DBSP.Examples/Program.fs`. Both demos showcase the same principle: only the changed records drive the amount of work DBSP performs.
+
 ### Design Documents
 
 - [Architecture Overview](docs/design/architecture.md)
