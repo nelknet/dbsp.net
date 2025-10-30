@@ -554,6 +554,8 @@ Full API documentation is available at [docs/api/](docs/api/index.html) (generat
 4. [Incremental Joins](docs/tutorials/incremental-joins.md)
 5. [Performance Optimization](docs/tutorials/performance.md)
 
+> Live code samples for all tutorials reside in `examples/DBSP.Tutorials`; run them with `dotnet run --project examples/DBSP.Tutorials -- --sample <name>`.
+
 ### Design Documents
 
 - [Architecture Overview](docs/design/architecture.md)
