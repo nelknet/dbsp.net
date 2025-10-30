@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>DBSP.Tests.Performance.CircuitLargeScaleBenchmarks-20250911-215750</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet v0.15.2, macOS Sequoia 15.6.1 (24G90) [Darwin 24.6.0]
+Apple M4 Max, 1 CPU, 16 logical and 16 physical cores
+.NET SDK 9.0.304
+  [Host] : .NET 9.0.8 (9.0.825.36511), Arm64 RyuJIT AdvSIMD DEBUG
+</code></pre>
+<pre><code>Job=QuickInProc  Toolchain=InProcessEmitToolchain  IterationCount=5  
+WarmupCount=1  
+</code></pre>
+
+<table>
+<thead><tr><th>Method       </th><th>DataSize</th><th>ChangeCount</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Gen0</th><th>Gen1</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>Incremental_Circuit</td><td>100000</td><td>1</td><td>102.3 &mu;s</td><td>1.25 &mu;s</td><td>0.32 &mu;s</td><td>1.0986</td><td>-</td><td>9.3 KB</td>
+</tr><tr><td>Incremental_Circuit</td><td>100000</td><td>10</td><td>112.8 &mu;s</td><td>6.36 &mu;s</td><td>0.98 &mu;s</td><td>4.6387</td><td>0.1221</td><td>38.6 KB</td>
+</tr><tr><td>Incremental_Circuit</td><td>100000</td><td>100</td><td>249.2 &mu;s</td><td>10.40 &mu;s</td><td>2.70 &mu;s</td><td>57.3730</td><td>-</td><td>470.51 KB</td>
+</tr><tr><td>Incremental_Circuit</td><td>1000000</td><td>1</td><td>144.0 &mu;s</td><td>73.32 &mu;s</td><td>11.35 &mu;s</td><td>1.0986</td><td>-</td><td>9.31 KB</td>
+</tr><tr><td>Incremental_Circuit</td><td>1000000</td><td>10</td><td>116.7 &mu;s</td><td>3.54 &mu;s</td><td>0.55 &mu;s</td><td>5.8594</td><td>-</td><td>48.31 KB</td>
+</tr><tr><td>Incremental_Circuit</td><td>1000000</td><td>100</td><td>300.9 &mu;s</td><td>17.46 &mu;s</td><td>4.53 &mu;s</td><td>78.1250</td><td>19.5313</td><td>640.53 KB</td>
+</tr></tbody></table>
+</body>
+</html>

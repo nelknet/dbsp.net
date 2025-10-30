@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>DBSP.Tests.Performance.CircuitLargeScaleBenchmarks-20250912-123613</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet v0.15.2, macOS Sequoia 15.6.1 (24G90) [Darwin 24.6.0]
+Apple M4 Max, 1 CPU, 16 logical and 16 physical cores
+.NET SDK 9.0.304
+  [Host] : .NET 9.0.8 (9.0.825.36511), Arm64 RyuJIT AdvSIMD DEBUG
+</code></pre>
+<pre><code>Job=QuickInProc  Toolchain=InProcessEmitToolchain  IterationCount=5  
+WarmupCount=1  
+</code></pre>
+
+<table>
+<thead><tr><th>Method       </th><th>DataSize</th><th>ChangeCount</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Gen0</th><th>Gen1</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>Incremental_Circuit</td><td>100000</td><td>1</td><td>109.4 &mu;s</td><td>1.89 &mu;s</td><td>0.49 &mu;s</td><td>1.5869</td><td>-</td><td>13.13 KB</td>
+</tr><tr><td>Incremental_Circuit</td><td>100000</td><td>10</td><td>132.9 &mu;s</td><td>4.13 &mu;s</td><td>1.07 &mu;s</td><td>10.2539</td><td>0.2441</td><td>85.52 KB</td>
+</tr><tr><td>Incremental_Circuit</td><td>100000</td><td>100</td><td>1,220.7 &mu;s</td><td>91.77 &mu;s</td><td>23.83 &mu;s</td><td>302.7344</td><td>89.8438</td><td>2477.87 KB</td>
+</tr><tr><td>Incremental_Circuit</td><td>1000000</td><td>1</td><td>112.9 &mu;s</td><td>1.70 &mu;s</td><td>0.44 &mu;s</td><td>1.5869</td><td>-</td><td>13.13 KB</td>
+</tr><tr><td>Incremental_Circuit</td><td>1000000</td><td>10</td><td>148.0 &mu;s</td><td>3.57 &mu;s</td><td>0.93 &mu;s</td><td>14.4043</td><td>0.9766</td><td>118.31 KB</td>
+</tr><tr><td>Incremental_Circuit</td><td>1000000</td><td>100</td><td>2,191.2 &mu;s</td><td>33.80 &mu;s</td><td>5.23 &mu;s</td><td>527.3438</td><td>179.6875</td><td>4330.17 KB</td>
+</tr></tbody></table>
+</body>
+</html>

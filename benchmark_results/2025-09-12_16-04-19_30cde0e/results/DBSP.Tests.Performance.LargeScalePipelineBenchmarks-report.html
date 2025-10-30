@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>DBSP.Tests.Performance.LargeScalePipelineBenchmarks-20250912-120419</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet v0.15.2, macOS Sequoia 15.6.1 (24G90) [Darwin 24.6.0]
+Apple M4 Max, 1 CPU, 16 logical and 16 physical cores
+.NET SDK 9.0.304
+  [Host] : .NET 9.0.8 (9.0.825.36511), Arm64 RyuJIT AdvSIMD DEBUG
+</code></pre>
+<pre><code>Job=QuickInProc  Toolchain=InProcessEmitToolchain  IterationCount=5  
+WarmupCount=1  
+</code></pre>
+
+<table>
+<thead><tr><th>Method              </th><th>DataSize</th><th>ChangeCount</th><th>Mean</th><th>Error</th><th>StdDev</th>
+</tr>
+</thead><tbody><tr><td>DBSP_Incremental_ApplyOnly</td><td>100000</td><td>1</td><td>3.509 ms</td><td>0.0951 ms</td><td>0.0147 ms</td>
+</tr><tr><td>DBSP_Incremental_Pipeline</td><td>100000</td><td>1</td><td>50.707 ms</td><td>6.2467 ms</td><td>1.6222 ms</td>
+</tr><tr><td>DBSP_Incremental_ApplyOnly</td><td>100000</td><td>100</td><td>3.724 ms</td><td>0.3508 ms</td><td>0.0911 ms</td>
+</tr><tr><td>DBSP_Incremental_Pipeline</td><td>100000</td><td>100</td><td>48.517 ms</td><td>2.6383 ms</td><td>0.4083 ms</td>
+</tr><tr><td>DBSP_Incremental_ApplyOnly</td><td>300000</td><td>1</td><td>14.963 ms</td><td>1.4833 ms</td><td>0.3852 ms</td>
+</tr><tr><td>DBSP_Incremental_Pipeline</td><td>300000</td><td>1</td><td>188.199 ms</td><td>14.5142 ms</td><td>3.7693 ms</td>
+</tr><tr><td>DBSP_Incremental_ApplyOnly</td><td>300000</td><td>100</td><td>14.658 ms</td><td>0.6523 ms</td><td>0.1694 ms</td>
+</tr><tr><td>DBSP_Incremental_Pipeline</td><td>300000</td><td>100</td><td>188.702 ms</td><td>22.1686 ms</td><td>5.7571 ms</td>
+</tr></tbody></table>
+</body>
+</html>
