@@ -28,16 +28,17 @@ a key vanishes because its net weight reaches zero.
 
 ```fsharp
 let z =
-    ZSet.buildWith (fun b ->
-        b.Add("insert", 1)
-        b.Add("delete", -1)
-        b.Add("upsert", -1)
-        b.Add("upsert", 1))
+    ZSetDelta.Create<string>()
+        .AddInsert("insert")
+        .AddDelete("delete")
+        .AddWeight("upsert", -1)
+        .AddWeight("upsert", 1)
+        .ToZSet()
 ```
 
-`ZSet.buildWith` batches inserts through an efficient builder that coalesces
-duplicate keys. The example above produces an empty `ZSet` because the positive
-and negative weights cancel out.
+`ZSetDelta.Create` batches intent-driven operations and coalesces duplicate
+keys automatically. The example above produces an empty `ZSet` because the
+positive and negative weights cancel out.
 
 ### Algebra is closed
 

@@ -9,6 +9,7 @@
     <Compile Include="BatchTrace.fs" />
     <Compile Include="Algebra.fs" />
     <Compile Include="ZSet.fs" />
+    <Compile Include="ZSetDelta.fs" />
     <Compile Include="IndexedZSet.fs" />
     <Compile Include="Stream.fs" />
     <Compile Include="API.fs" />

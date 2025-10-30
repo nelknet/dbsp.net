@@ -1,6 +1,7 @@
 module DBSP.Tutorials.FirstCircuit
 
 open System.Threading.Tasks
+open DBSP.Core
 open DBSP.Core.ZSet
 open DBSP.Circuit
 open DBSP.Tutorials.Common
@@ -26,9 +27,10 @@ type IntegrateExecutable(delta: StreamHandle<ZSet<string>>, state: StreamHandle<
             }
 
 let private mkDelta (pairs: (string * int) list) =
-    ZSet.buildWith (fun builder ->
-        for (key, weight) in pairs do
-            builder.Add(key, weight))
+    let builder = ZSetDelta.Create<string>()
+    pairs
+    |> List.iter (fun (key, weight) -> builder.AddWeight(key, weight) |> ignore)
+    builder.ToZSet()
 
 let private scriptedDeltas =
     [ [ "apple", 1; "banana", 2 ]

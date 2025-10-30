@@ -3,6 +3,7 @@ module DBSP.Tutorials.Performance
 open System
 open System.Collections.Generic
 open System.Diagnostics
+open DBSP.Core
 open DBSP.Core.ZSet
 open DBSP.Operators.TemporalOperators
 open DBSP.Tutorials.Common
@@ -10,27 +11,27 @@ open DBSP.Tutorials.Common
 type Order = { Id: int; Customer: int }
 
 let private buildDelta (changes: seq<Order option * Order option>) =
-    let delta = Dictionary<int,int>()
-    let add key weight =
+    let delta = Dictionary<int, int>()
+    let accumulate key weight =
         if weight <> 0 then
-            let existing = if delta.ContainsKey key then delta[key] else 0
-            let combined = existing + weight
-            if combined = 0 then delta.Remove key |> ignore
-            else delta[key] <- combined
+            let current = if delta.ContainsKey key then delta[key] else 0
+            let updated = current + weight
+            if updated = 0 then delta.Remove key |> ignore else delta[key] <- updated
     for (beforeOpt, afterOpt) in changes do
         match beforeOpt, afterOpt with
         | None, Some afterOrder ->
-            add afterOrder.Customer 1
+            accumulate afterOrder.Customer 1
         | Some beforeOrder, None ->
-            add beforeOrder.Customer -1
+            accumulate beforeOrder.Customer -1
         | Some beforeOrder, Some afterOrder ->
             if beforeOrder.Customer <> afterOrder.Customer then
-                add beforeOrder.Customer -1
-                add afterOrder.Customer 1
+                accumulate beforeOrder.Customer -1
+                accumulate afterOrder.Customer 1
         | None, None -> ()
+    let builder = ZSetDelta.Create<int>()
     delta
-    |> Seq.map (fun kvp -> kvp.Key, kvp.Value)
-    |> ZSet.ofSeq
+    |> Seq.iter (fun kvp -> builder.AddWeight(kvp.Key, kvp.Value) |> ignore)
+    builder.ToZSet()
 
 let private chooseExisting (rnd: Random) (store: Dictionary<int, int>) =
     if store.Count = 0 then None
@@ -57,10 +58,11 @@ let run iterations changesPerStep =
     // Prepare incremental baseline
     let integrate = new IntegrateOperator<int>()
     let baseline =
+        let builder = ZSetDelta.Create<int>()
         orders.Values
         |> Seq.countBy id
-        |> Seq.map (fun (customer, count) -> customer, count)
-        |> ZSet.ofSeq
+        |> Seq.iter (fun (customer, count) -> builder.AddWeight(customer, count) |> ignore)
+        builder.ToZSet()
     integrate.EvalAsyncImpl(baseline) |> runTask |> ignore
 
     let swNaive = Stopwatch()
@@ -70,7 +72,10 @@ let run iterations changesPerStep =
         let actualMap =
             actual
             |> ZSet.fold (fun acc key weight ->
-                if weight <> 0 then Map.add key weight acc else acc) Map.empty
+                if weight <> 0 then
+                    acc |> Map.change key (fun existing -> Some(weight + defaultArg existing 0))
+                else
+                    acc) Map.empty
         if expected <> actualMap then
             let diff =
                 Seq.append

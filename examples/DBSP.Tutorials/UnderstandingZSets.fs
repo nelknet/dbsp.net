@@ -1,12 +1,14 @@
 module DBSP.Tutorials.UnderstandingZSets
 
+open DBSP.Core
 open DBSP.Core.ZSet
 open DBSP.Tutorials.Common
 
 let private mkZSet (pairs: ('K * int) list) =
-    ZSet.buildWith (fun builder ->
-        for (key, weight) in pairs do
-            builder.Add(key, weight))
+    let builder = ZSetDelta.Create<'K>()
+    pairs
+    |> List.iter (fun (key, weight) -> builder.AddWeight(key, weight) |> ignore)
+    builder.ToZSet()
 
 let private formatTuple (name: string, count: int) = $"{name}:{count}"
 
@@ -27,13 +29,14 @@ let run () =
     printfn "negate         -> %s" (formatZSet inverted id)
 
     let inventoryDelta =
-        ZSet.buildWith (fun builder ->
-            builder.Add(("widget", 3), 1)
-            builder.Add(("widget", 3), -1)
-            builder.Add(("widget", 2), 1)
-            builder.Add(("gizmo", 1), 1)
-            builder.Add(("gizmo", 1), -1)
-            builder.Add(("gizmo", 4), 1))
+        ZSetDelta.Create<string * int>()
+            .AddWeight(("widget", 3), 1)
+            .AddWeight(("widget", 3), -1)
+            .AddWeight(("widget", 2), 1)
+            .AddWeight(("gizmo", 1), 1)
+            .AddWeight(("gizmo", 1), -1)
+            .AddWeight(("gizmo", 4), 1)
+            .ToZSet()
 
     printfn "\nraw inventory  -> %s" (formatZSet inventoryDelta formatTuple)
 

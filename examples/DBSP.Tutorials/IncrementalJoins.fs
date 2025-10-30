@@ -1,5 +1,6 @@
 module DBSP.Tutorials.IncrementalJoins
 
+open DBSP.Core
 open DBSP.Core.ZSet
 open DBSP.Operators.JoinOperators
 open DBSP.Tutorials.Common
@@ -11,9 +12,10 @@ type JoinStep = {
 }
 
 let private mkZSet (entries: ((string * string) * int) list) =
-    ZSet.buildWith (fun builder ->
-        for ((key, value), weight) in entries do
-            builder.Add((key, value), weight))
+    let builder = ZSetDelta.Create<string * string>()
+    entries
+    |> List.iter (fun ((key, value), weight) -> builder.AddWeight((key, value), weight) |> ignore)
+    builder.ToZSet()
 
 let private steps : JoinStep list =
     [ { Note = "initial inserts"

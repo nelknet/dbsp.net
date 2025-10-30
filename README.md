@@ -561,6 +561,7 @@ Full API documentation is available at [docs/api/](docs/api/index.html) (generat
 DBSP.NET circuits update results **in time proportional to the size of the change**, not the size of the entire data set. A small delta keeps work small even if the underlying collection has millions of rows.
 
 ```fsharp
+open DBSP.Core
 open DBSP.Core.ZSet
 open DBSP.Operators.TemporalOperators
 
@@ -570,10 +571,15 @@ type Order = { Id: int; CustomerId: int }
 let recomputeAll (orders: Order list) =
     orders |> Seq.countBy (fun o -> o.CustomerId) |> Map.ofSeq
 
-// DBSP: apply only the delta (O(|delta|) per step)
+// DBSP: build the delta declaratively and apply it (O(|delta|) per step)
 let integrate = IntegrateOperator<int>()
-let applyDelta (delta: ZSet<int>) =
-    integrate.EvalAsyncImpl(delta).Result
+
+let applyDelta (insertions: seq<int>) (deletions: seq<int>) (moves: seq<int * int>) =
+    let builder = ZSetDelta.Create<int>()
+    builder.AddInserts insertions |> ignore
+    builder.AddDeletes deletions |> ignore
+    moves |> Seq.iter (fun (oldKey, newKey) -> builder.AddMove(oldKey, newKey) |> ignore)
+    integrate.EvalAsyncImpl(builder.ToZSet()).Result
 ```
 
 The tutorials project contains a runnable comparison:

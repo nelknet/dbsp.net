@@ -1,13 +1,15 @@
 module DBSP.Tutorials.GettingStarted
 
+open DBSP.Core
 open DBSP.Core.ZSet
 open DBSP.Operators.TemporalOperators
 open DBSP.Tutorials.Common
 
 let private mkDelta (pairs: (string * int) list) =
-    ZSet.buildWith (fun builder ->
-        for (key, weight) in pairs do
-            builder.Add(key, weight))
+    let builder = ZSetDelta.Create<string>()
+    pairs
+    |> List.iter (fun (key, weight) -> builder.AddWeight(key, weight) |> ignore)
+    builder.ToZSet()
 
 let private sampleDeltas =
     [ mkDelta [ "alice", 1; "bob", 1 ]

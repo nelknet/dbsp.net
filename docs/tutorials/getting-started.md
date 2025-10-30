@@ -46,6 +46,15 @@ array is always the latest per-customer order count.
 ## Code highlights
 
 ```fsharp
+open DBSP.Core
+
+let delta =
+    ZSetDelta.Create<string>()
+        .AddInsert("alice")
+        .AddInsert("bob")
+        .AddMove("alice", "charlie")
+        .ToZSet()
+
 let integrate = new IntegrateOperator<string>()
 
 let applyStep delta =
@@ -56,6 +65,9 @@ let applyStep delta =
     }
 ```
 
+- `ZSetDelta.Create` exposes intent-first helpers (`AddInsert`, `AddDelete`,
+  `AddMove`, `AddWeight`) so you never have to manually pass `±1` unless you
+  want to batch changes explicitly.
 - `IntegrateOperator` adds the delta to its internal accumulator and returns the
   fresh state. No full recomputation happens.
 - The sample feeds a sequence of hand-written deltas to keep the example focused
