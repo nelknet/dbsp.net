@@ -595,6 +595,8 @@ module ZSet =
 
     /// Create singleton ZSet with given key and weight
     let singleton key weight =
+        if weight = 0 then empty
+        else
         match selectedBackend with
         | ZSetBackend.Batch -> { Backend = ZSetBackend.Batch; Fast = FZ.empty 0; Batch = Trace.ofSeq [ (key, weight) ]; Hash = HashMap.empty; Small = [||]; LastFlushTicks = 0L }
         | ZSetBackend.Fast ->
@@ -602,9 +604,7 @@ module ZSet =
             if weight <> 0 then FZ.insertOrUpdate d key weight
             { Backend = ZSetBackend.Fast; Fast = d; Batch = Trace.empty<'K>; Hash = HashMap.empty; Small = [||]; LastFlushTicks = 0L }
         | ZSetBackend.Hash -> { Backend = ZSetBackend.Hash; Fast = FZ.empty 0; Batch = Trace.empty<'K>; Hash = HashMap.ofList [ (key, weight) ]; Small = [||]; LastFlushTicks = 0L }
-        | ZSetBackend.Adaptive ->
-            if weight = 0 then empty
-            else { Backend = ZSetBackend.Adaptive; Fast = FZ.empty 0; Batch = Trace.empty<'K>; Hash = HashMap.empty; Small = [| (key, weight) |]; LastFlushTicks = 0L }
+        | ZSetBackend.Adaptive -> { Backend = ZSetBackend.Adaptive; Fast = FZ.empty 0; Batch = Trace.empty<'K>; Hash = HashMap.empty; Small = [| (key, weight) |]; LastFlushTicks = 0L }
 
     /// Create ZSet from sequence of key-weight pairs
     let ofSeq (pairs: seq<'K * int>) =
